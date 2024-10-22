@@ -25,10 +25,10 @@ Input 6: Dane dotyczące zawodników -> Dodatkowy model do tego lub jakaś miara
 
 <h4>Nasze własne metryki:</h4>
 <ul>
-  <li></li>
-  <li></li>
-  <li></li>
-  <li></li>
+  <li>Dni do najbliższego ważnego meczu</li>
+  <li>Dni od ostatniego meczu (dla zawodników/drużyny)</li>
+  <li>Jak sobie radzi drużyna w zależności od pogody</li>
+  <li>Zależność stylu gry</li>
   <li></li>
   <li></li>
 </ul>
