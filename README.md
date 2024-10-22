@@ -23,7 +23,7 @@ Input 6: Dane dotyczące zawodników -> Dodatkowy model do tego lub jakaś miara
 - Kilka dense layers z coraz mniejszą ilością neuronów</br>
 - Na koniec Softmax layer z 3 wyjściami odpowiadającymi prawdopodobieństwu wygranej gospodarzy/remisu/wygranej gości</br>
 
-Nasze własne metryki:
+<h4>Nasze własne metryki:</h4>
 <ul>
   <li></li>
   <li></li>
