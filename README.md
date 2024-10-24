@@ -29,6 +29,6 @@ Input 6: Dane dotyczące zawodników -> Dodatkowy model do tego lub jakaś miara
   <li>Dni od ostatniego meczu (dla zawodników/drużyny)</li>
   <li>Jak sobie radzi drużyna w zależności od pogody</li>
   <li>Zależność stylu gry</li>
-  <li></li>
-  <li></li>
+  <li>Statystyczne porównanie formacji</li>
+  <li>Wpływ sędziego - więcej kartek: trichę większa losowość wyniku</li>
 </ul>
