@@ -2,7 +2,7 @@
 
 <h4>Dane które zbieramy:</h4>
 <ul>
-  <li>Statystyki meczowe (zrobione dla PL 18-24 ze stronki FBRef)</li>
+  <li>Statystyki meczowe (zrobione dla PL 17-24 ze stronki FBRef)</li>
   <li>Dane stadionów (dodać wymiary boisk niektóych stadionów)</li>
   <li>Dane pogodowe (zrobione, będzie można aktualizować dane w czasie rzeczywistym)</li>
   <li>Dane zawodników (do zrobienia)</li>
