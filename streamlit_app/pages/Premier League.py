@@ -8,28 +8,39 @@ def loadData():
     df['date_x']=pd.to_datetime(df['date_x'])
     return df.sort_values(by='date_x')
 
+def restartStats():
+    for i in range (number_of_matches):
+        if f"show_row_{i}" in st.session_state:
+            st.session_state[f"show_row_{i}"] = False
+    st.session_state['round_filter2'] = round_filter2
+    st.session_state['round_filter1'] = round_filter1
 
 df=loadData()
 df_filtered=df
 
+if 'round_filter1' not in st.session_state:
+    st.session_state['round_filter1'] = 1
+
+if 'round_filter2' not in st.session_state:
+    st.session_state['round_filter2'] = 38
+
 st.title("Premier League")
-round_filter22=max(df_filtered['round'])
 filtr1, filtr2, filtr3, filtr4, filtr5 = st.columns(5)
 
 with filtr1:
-    season_filter = st.multiselect("Wybierz sezon", options=df_filtered['season'].unique())
+    season_filter = st.multiselect("Wybierz sezon", options=df_filtered['season'].unique(), on_change=restartStats)
 with filtr2:
-    round_filter1 = st.slider("Wybierz kolejkę początkową", min_value=1, max_value=max(df_filtered['round']))
+    round_filter1 = st.slider("Wybierz kolejkę początkową", min_value=1, max_value=max(df_filtered['round']), on_change=restartStats)
 with filtr3:
-    round_filter2 = st.slider("Wybierz kolejkę końcową", min_value=1, max_value=max(df_filtered['round']))
+    round_filter2 = st.slider("Wybierz kolejkę końcową", min_value=1, max_value=max(df_filtered['round']), value=38, on_change=restartStats)
 with filtr4:
-    team_filter = st.multiselect("Wybierz drużynę", options = df_filtered['home_team'].unique())
+    team_filter = st.multiselect("Wybierz drużynę", options = sorted(df_filtered['home_team'].unique()), on_change=restartStats)
 with filtr5:
-    number_of_matches = st.slider("Wybierz liczbę wyświetlanych meczów", min_value=10, max_value=100, step=5)
+    number_of_matches = st.slider("Wybierz liczbę wyświetlanych meczów", min_value=10, max_value=100, step=5, on_change=restartStats)
 
 season_filter2=season_filter
 team_filter2=team_filter
-round_filter22=round_filter2
+
 if season_filter == []:
     season_filter2=df['season'].unique()
 if team_filter==[]:
@@ -113,3 +124,5 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
            st.write(df_filtered.iloc[i]["Red Cards_away"])
            st.write(df_filtered.iloc[i]["Total Passes_away"])
            st.write(df_filtered.iloc[i]["Completed Passes_away"])
+
+st.session_state
