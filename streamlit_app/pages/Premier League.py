@@ -31,10 +31,11 @@ def showStats(i):
     st.session_state[f"show_row_{i}"] = not st.session_state.get(f"show_row_{i}", False)
 
 def showDateButton():
-    if len(season_filter_standings) == 0:
+    if len(season_filter) == 0:
         st.session_state["show_table"] = True
     else:
         st.session_state["show_table"] = False
+    restartStats()
 
 # Centrowanie tekstów na całej stronie
 st.markdown("""
@@ -51,8 +52,6 @@ df, standings=loadData()
 df_filtered=df
 standings_filtered=standings
 
-st.write(standings)
-
 # Na razie nieużywane - do zmiany suwaków filtrowych
 if 'round_filter1' not in st.session_state:
     st.session_state['round_filter1'] = 1
@@ -61,47 +60,62 @@ if 'round_filter2' not in st.session_state:
     st.session_state['round_filter2'] = 38
 
 # Tytuł i tworzenie filtrów
-st.title("Premier League ### tu miejsce na logo premier league")
-season_filter_standings = st.multiselect("Wybierz sezon, z którego chcesz zobaczyć tabelę",
+st.title("Premier League")
+# Wybieranie tabeli
+season_filter = st.multiselect("Wybierz sezon, z którego chcesz zobaczyć tabelę oraz statystyki",
     options = standings['season'].unique(), on_change=showDateButton, max_selections=1)
 
-season_filter_standings2 = season_filter_standings
+season_filter2 = season_filter
 
-if season_filter_standings == []:
-    season_filter_standings2=sorted(standings['season'].unique(), reverse=True)[0]
+if season_filter == []:
+    season_filter2=sorted(standings['season'].unique(), reverse=True)[0]
+    season_filter_matches = season_filter2[2:4] + '-' + season_filter2[7:9]
+else:
+    season_filter_matches = season_filter2[0][2:4] + '-' + season_filter2[0][7:9]
+
+date_standings = max(standings_filtered['date'].dt.strftime('%Y-%m-%d'))
+selected_season = season_filter2
 
 if st.session_state.get("show_table", False):
-    selected_season = season_filter_standings[0]
+    selected_season = season_filter2[0]
     standings_filtered = standings[standings['season'] == selected_season]
     date_standings = st.date_input("Wybierz datę tabeli",
         min_value = min(standings_filtered['date']),
-        max_value = max(standings_filtered['date']))
-    st.write(standings_filtered)
+        max_value = max(standings_filtered['date']),
+        value = max(standings_filtered['date']))
 
-filtr1, filtr2, filtr3, filtr4, filtr5 = st.columns(5)
+possible_date = max(standings_filtered[standings_filtered["date"] <= pd.to_datetime(date_standings)]["date"].unique())
+standings_filtered = standings_filtered[standings_filtered["date"] == possible_date]
+
+st.header(f"Stan tabeli Premier League w sezonie {selected_season} na {date_standings}")
+
+selected_columns_standings = ['team', 'matches_played', 'wins', 'draws', 'defeats', 'goal_difference', 'goals', 'goals_conceded', 'points']
+table = standings_filtered[selected_columns_standings]
+table['place'] = range(1, len(table) + 1)
+table = table.set_index('place')
+table.columns = [ 'Zespół', 'Mecze rozegrane', 'Wygrane', 'Remisy', 'Porażki', 'Różnica bramek', 'Bramki strzelone', 'Bramki stracone', 'Punkty']
+st.table(table)
+
+filtr1, filtr2, filtr3, filtr4 = st.columns(4)
 
 with filtr1:
-    season_filter = st.multiselect("Wybierz sezon", options=df_filtered['season'].unique(), on_change=restartStats)
-with filtr2:
     round_filter1 = st.slider("Wybierz kolejkę początkową", min_value=1, max_value=max(df_filtered['round']), on_change=restartStats)
-with filtr3:
+with filtr2:
     round_filter2 = st.slider("Wybierz kolejkę końcową", min_value=1, max_value=max(df_filtered['round']), value=38, on_change=restartStats)
-with filtr4:
+with filtr3:
     team_filter = st.multiselect("Wybierz drużynę", options = sorted(df_filtered['home_team'].unique()), on_change=restartStats)
-with filtr5:
+with filtr4:
     number_of_matches = st.slider("Wybierz liczbę wyświetlanych meczów", min_value=10, max_value=100, step=5, on_change=restartStats)
 
-season_filter2=season_filter
 team_filter2=team_filter
 
 # Filtrowanie danych
-if season_filter == []:
-    season_filter2=df['season'].unique()
+
 if team_filter==[]:
     team_filter2=df['home_team'].unique()
 df_filtered=df[(df["round"]>=round_filter1)
                & (df['round']<=round_filter2)
-               & (df['season'].isin(season_filter2))
+               & (df['season'] == season_filter_matches)
                & ((df['home_team'].isin(team_filter2))
                   | (df['away_team'].isin(team_filter2)))]
 
@@ -191,9 +205,3 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
             """
         data += "</div>"
         st.markdown(data, unsafe_allow_html=True)
-        st.button(
-            "Przejdź do większej ilości statystyk oraz wykresów",
-            key=f"button_{i}",
-            on_click=showStats,
-            args=(i,),
-        )
