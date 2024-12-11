@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import runpy
 
 # Ustawianie domyślnego wyglądu strony na wide
 st.set_page_config(
@@ -109,6 +110,7 @@ with filtr4:
 
 team_filter2=team_filter
 
+
 # Filtrowanie danych
 
 if team_filter==[]:
@@ -195,13 +197,22 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
                 margin: 20px;
                 box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
             """
-        for i in range(len(categories)):
+        for j in range(len(categories)):
             data += f"""
             <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-                <div style="width: 100px;">{values_home[i]}</div>
-                <div style="width: 200px;">{categories[i]}</div>
-                <div style="width: 100px;">{values_away[i]}</div>
+                <div style="width: 100px;">{values_home[j]}</div>
+                <div style="width: 200px;">{categories[j]}</div>
+                <div style="width: 100px;">{values_away[j]}</div>
             </div>
             """
         data += "</div>"
         st.markdown(data, unsafe_allow_html=True)
+        if st.button(
+            "Pokaż więcej statystyk",
+            key=f"show_stats_button_{i}",
+            args=(i,),
+        ):
+            st.session_state["stats_id"] = df_filtered.iloc[i]["Unnamed: 0"]
+            st.switch_page("pages/Statystyki Premier League.py")
+st.write(df_filtered)
+st.write(st.session_state)
