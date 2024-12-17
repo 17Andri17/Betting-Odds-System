@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import runpy
 
+
 # Ustawianie domyślnego wyglądu strony na wide
 st.set_page_config(
     layout="wide"
@@ -11,13 +12,18 @@ st.set_page_config(
 # ładowanie danych
 @st.cache_data
 def loadData():
-    df=pd.read_csv("../premier_league_21_24_stadiums_weather.csv")
-    df['date_x']=pd.to_datetime(df['date_x'])
-    df['date_x'] = df['date_x'].dt.strftime('%Y-%m-%d %H:%M')
+    # df=pd.read_csv("../premier_league_21_24_stadiums_weather.csv")
+    # df['date_x']=pd.to_datetime(df['date_x'])
+    # df['date_x'] = df['date_x'].dt.strftime('%Y-%m-%d %H:%M')
+    df = pd.read_csv("../fbref/data/matches_with_rolling_stats_pl.csv")
+    df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
+    df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
+    df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
+    df["formation_away"] = df["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
 
     standings = pd.read_csv("../fbref/standings_pl.csv")
     standings['date']=pd.to_datetime(standings['date'])
-    return df.sort_values(by='date_x', ascending=False), standings
+    return df.sort_values(by='date', ascending=False), standings
 
 # Chowanie statystyk po zmianie filtrów
 def restartStats():
@@ -70,9 +76,9 @@ season_filter2 = season_filter
 
 if season_filter == []:
     season_filter2=sorted(standings['season'].unique(), reverse=True)[0]
-    season_filter_matches = season_filter2[2:4] + '-' + season_filter2[7:9]
+    season_filter_matches = season_filter2
 else:
-    season_filter_matches = season_filter2[0][2:4] + '-' + season_filter2[0][7:9]
+    season_filter_matches = season_filter2[0]
 
 date_standings = max(standings_filtered['date'].dt.strftime('%Y-%m-%d'))
 selected_season = season_filter2
@@ -131,7 +137,7 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
                     padding: 20px 0;
                     margin: 10px;
                     margin-top: 0;
-                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['date_x']}
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['date']}
                 </div>""", unsafe_allow_html=True)
     with col2:
         st.markdown(f"""
@@ -140,7 +146,7 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
                     padding: 20px 0;
                     margin: 10px;
                     margin-top: 0;
-                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['home_team']} {df_filtered.iloc[i]['home_goals_x']} - {df_filtered.iloc[i]['away_goals_x']} {df_filtered.iloc[i]['away_team']}
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['home_team']} {df_filtered.iloc[i]['home_goals']} - {df_filtered.iloc[i]['away_goals']} {df_filtered.iloc[i]['away_team']}
                 </div>""", unsafe_allow_html=True)
     with col3:
         st.markdown(f"""
@@ -175,19 +181,18 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
                     <p style='text-align: center; font-size: 20px;'>Sędzia: {df_filtered.iloc[i]['referee']}</p>
                 </div>""", unsafe_allow_html=True)
         categories = ["Posiadanie piłki", "Strzały", "Strzały na bramkę", "Rzuty wolne", "Rzuty rózne",
-            "Spalone", "Obrony bramkarskie", "Faule", "Żółte kartki", "Czerwone kartki", "Podania", "Celne podania"]
-        values_home = [df_filtered.iloc[i]["Ball Possession_home"], df_filtered.iloc[i]["Goal Attempts_home"],
-            df_filtered.iloc[i]["Shots on Goal_home"], df_filtered.iloc[i]["Free Kicks_home"],
-            df_filtered.iloc[i]["Corner Kicks_home"], df_filtered.iloc[i]["Offsides_home"],
-            df_filtered.iloc[i]["Goalkeeper Saves_home"], df_filtered.iloc[i]["Fouls_home"],
-            df_filtered.iloc[i]["Yellow Cards_home"], df_filtered.iloc[i]["Red Cards_home"],
-            df_filtered.iloc[i]["Total Passes_home"], df_filtered.iloc[i]["Completed Passes_home"]]
-        values_away = [df_filtered.iloc[i]["Ball Possession_away"], df_filtered.iloc[i]["Goal Attempts_away"],
-            df_filtered.iloc[i]["Shots on Goal_away"], df_filtered.iloc[i]["Free Kicks_away"],
-            df_filtered.iloc[i]["Corner Kicks_away"], df_filtered.iloc[i]["Offsides_away"],
-            df_filtered.iloc[i]["Goalkeeper Saves_away"], df_filtered.iloc[i]["Fouls_away"],
-            df_filtered.iloc[i]["Yellow Cards_away"], df_filtered.iloc[i]["Red Cards_away"],
-            df_filtered.iloc[i]["Total Passes_away"], df_filtered.iloc[i]["Completed Passes_away"]]
+            "Spalone", "Faule", "Żółte kartki", "Czerwone kartki", "Podania", "Celne podania"]
+        # trzeba będzie dodać Ball Possession jako pierwsze
+        values_home = ["54%", df_filtered.iloc[i]["home_shots"],
+            df_filtered.iloc[i]["home_shots_on_target"], df_filtered.iloc[i]["home_fouled"],
+            df_filtered.iloc[i]["home_corner_kicks"], df_filtered.iloc[i]["home_offsides"], df_filtered.iloc[i]["home_fouls"],
+            df_filtered.iloc[i]["home_cards_yellow"], df_filtered.iloc[i]["home_cards_red"],
+            df_filtered.iloc[i]["home_passes"], df_filtered.iloc[i]["home_passes_completed"]]
+        values_away = ["46%", df_filtered.iloc[i]["away_shots"],
+            df_filtered.iloc[i]["away_shots_on_target"], df_filtered.iloc[i]["away_fouled"],
+            df_filtered.iloc[i]["away_corner_kicks"], df_filtered.iloc[i]["away_offsides"], df_filtered.iloc[i]["away_fouls"],
+            df_filtered.iloc[i]["away_cards_yellow"], df_filtered.iloc[i]["away_cards_red"],
+            df_filtered.iloc[i]["away_passes"], df_filtered.iloc[i]["away_passes_completed"]]
 
         data = """
             <div style="text-align: center; font-size: 15px;
@@ -212,7 +217,5 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
             key=f"show_stats_button_{i}",
             args=(i,),
         ):
-            st.session_state["stats_id"] = df_filtered.iloc[i]["Unnamed: 0"]
+            st.session_state["stats_id"] = df_filtered.iloc[i]
             st.switch_page("pages/Statystyki Premier League.py")
-st.write(df_filtered)
-st.write(st.session_state)
