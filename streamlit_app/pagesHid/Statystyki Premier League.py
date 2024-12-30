@@ -6,6 +6,33 @@ import random
 from mplsoccer import Pitch
 import matplotlib.pyplot as plt
 
+
+def navbar():
+    cols = st.columns(6)
+    with cols[0]:
+        if st.button(
+            "Strona Główna",
+            key=f"HomeSPL"
+        ):
+            st.switch_page("Kursomat.py")
+    with cols[1]:
+        if st.button(
+            "Premier League",
+            key=f"PremierLeagueSPL"
+        ):
+            st.switch_page("pagesVis/Premier League.py")
+    with cols[2]:
+        st.write("Serie A")
+    with cols[3]:
+        st.write("Ligue1")
+    with cols[4]:
+        st.write("Bundesliga")
+    with cols[5]:
+        st.write("Ligue 1")
+
+navbar()
+
+
 def create_team_structure(idx, formation, starting_eleven):
     
     formation_parts = list(map(int, formation.split('-')))

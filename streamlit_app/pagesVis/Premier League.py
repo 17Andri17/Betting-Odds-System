@@ -4,10 +4,30 @@ import pandas as pd
 import runpy
 
 
-# Ustawianie domyślnego wyglądu strony na wide
-st.set_page_config(
-    layout="wide"
-)
+def navbar():
+    cols = st.columns(6)
+    with cols[0]:
+        if st.button(
+            "Strona Główna",
+            key=f"HomePL"
+        ):
+            st.switch_page("Kursomat.py")
+    with cols[1]:
+        if st.button(
+            "Premier League",
+            key=f"PremierLeaguePL"
+        ):
+            st.switch_page("pagesVis/Premier League.py")
+    with cols[2]:
+        st.write("Serie A")
+    with cols[3]:
+        st.write("Ligue1")
+    with cols[4]:
+        st.write("Bundesliga")
+    with cols[5]:
+        st.write("Ligue 1")
+
+navbar()
 
 # ładowanie danych
 @st.cache_data
@@ -43,16 +63,6 @@ def showDateButton():
     else:
         st.session_state["show_table"] = False
     restartStats()
-
-# Centrowanie tekstów na całej stronie
-st.markdown("""
-    <style>
-    .center-text {
-        text-align: center;
-        margin: auto;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
 
 df, standings=loadData()
@@ -218,4 +228,4 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
             args=(i,),
         ):
             st.session_state["stats_id"] = df_filtered.iloc[i]
-            st.switch_page("pages/Statystyki Premier League.py")
+            st.switch_page("pagesHid/Statystyki Premier League.py")
