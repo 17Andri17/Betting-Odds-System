@@ -2,7 +2,16 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import runpy
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 
+css = """
+    .st-emotion-cache-1fttcpj eczjsme15{
+    display: none;
+    }
+"""
+
+st.html(f"<style>{css}</style>")
 
 def navbar():
     cols = st.columns(6)
@@ -29,22 +38,6 @@ def navbar():
 
 navbar()
 
-# ładowanie danych
-@st.cache_data
-def loadData():
-    # df=pd.read_csv("../premier_league_21_24_stadiums_weather.csv")
-    # df['date_x']=pd.to_datetime(df['date_x'])
-    # df['date_x'] = df['date_x'].dt.strftime('%Y-%m-%d %H:%M')
-    df = pd.read_csv("../fbref/data/matches_with_rolling_stats_pl.csv")
-    df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
-    df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
-    df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
-    df["formation_away"] = df["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
-
-    standings = pd.read_csv("../fbref/standings_pl.csv")
-    standings['date']=pd.to_datetime(standings['date'])
-    return df.sort_values(by='date', ascending=False), standings
-
 # Chowanie statystyk po zmianie filtrów
 def restartStats():
     for i in range (number_of_matches):
@@ -65,7 +58,8 @@ def showDateButton():
     restartStats()
 
 
-df, standings=loadData()
+df = st.session_state["dfPL"]
+standings = st.session_state["standingsPL"]
 df_filtered=df
 standings_filtered=standings
 
@@ -136,6 +130,7 @@ df_filtered=df[(df["round"]>=round_filter1)
                & (df['season'] == season_filter_matches)
                & ((df['home_team'].isin(team_filter2))
                   | (df['away_team'].isin(team_filter2)))]
+df_filtered.sort_values(by="round", ascending=False, inplace=True)
 
 # Wypisywanie danych
 for i in range(min(number_of_matches, df_filtered['home_team'].count())):
@@ -193,35 +188,73 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
         categories = ["Posiadanie piłki", "Strzały", "Strzały na bramkę", "Rzuty wolne", "Rzuty rózne",
             "Spalone", "Faule", "Żółte kartki", "Czerwone kartki", "Podania", "Celne podania"]
         # trzeba będzie dodać Ball Possession jako pierwsze
-        values_home = ["54%", df_filtered.iloc[i]["home_shots"],
+        values_home = ["54", df_filtered.iloc[i]["home_shots"],
             df_filtered.iloc[i]["home_shots_on_target"], df_filtered.iloc[i]["home_fouled"],
             df_filtered.iloc[i]["home_corner_kicks"], df_filtered.iloc[i]["home_offsides"], df_filtered.iloc[i]["home_fouls"],
             df_filtered.iloc[i]["home_cards_yellow"], df_filtered.iloc[i]["home_cards_red"],
             df_filtered.iloc[i]["home_passes"], df_filtered.iloc[i]["home_passes_completed"]]
-        values_away = ["46%", df_filtered.iloc[i]["away_shots"],
+        values_away = ["46", df_filtered.iloc[i]["away_shots"],
             df_filtered.iloc[i]["away_shots_on_target"], df_filtered.iloc[i]["away_fouled"],
             df_filtered.iloc[i]["away_corner_kicks"], df_filtered.iloc[i]["away_offsides"], df_filtered.iloc[i]["away_fouls"],
             df_filtered.iloc[i]["away_cards_yellow"], df_filtered.iloc[i]["away_cards_red"],
             df_filtered.iloc[i]["away_passes"], df_filtered.iloc[i]["away_passes_completed"]]
 
-        data = """
-            <div style="text-align: center; font-size: 15px;
-                background-color: #f8f9fa; 
-                border-radius: 10px; 
-                padding: 20px; 
-                margin: 20px;
-                box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
-            """
-        for j in range(len(categories)):
-            data += f"""
-            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-                <div style="width: 100px;">{values_home[j]}</div>
-                <div style="width: 200px;">{categories[j]}</div>
-                <div style="width: 100px;">{values_away[j]}</div>
-            </div>
-            """
-        data += "</div>"
-        st.markdown(data, unsafe_allow_html=True)
+        values_home = [int(v) for v in values_home]
+        values_away = [int(v) for v in values_away]
+
+        # data = """
+        #     <div style="text-align: center; font-size: 15px;
+        #         background-color: #f8f9fa; 
+        #         border-radius: 10px; 
+        #         padding: 20px; 
+        #         margin: 20px;
+        #         box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
+        #     """
+        
+        # for j in range(len(categories)):
+        #     data += f"""
+        #     <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+        #         <div style="width: 100px;">{values_home[j]}</div>
+        #         <div style="width: 200px;">{categories[j]}</div>
+        #         <div style="width: 100px;">{values_away[j]}</div>
+        #     </div>
+        #     """
+        # Funkcja do rysowania pojedynczego wykresu dla każdej statystyki
+        col1, col2, col3 = st.columns([2,9,2])
+        with col2:
+            max_values = np.maximum(values_home, values_away)
+            normalized_home = np.array(values_home) / max_values
+            normalized_away = np.array(values_away) / max_values
+
+            # Parametry wykresu
+            bar_height = 0.8
+            bar_spacing = 1.2
+            index = np.arange(len(categories) * 2, step=2)
+
+            fig, ax = plt.subplots(figsize=(10, 7))
+
+            # Rysowanie slupkow
+            ax.barh(index, normalized_home, height=bar_height, color='crimson', label=df_filtered.iloc[i]['home_team'], align='center')
+            ax.barh(index + bar_height, normalized_away, height=bar_height, color='darkblue', label=df_filtered.iloc[i]['away_team'], align='center')
+
+            # Dodanie wartosci tekstowych na wykresie
+            for s, (v_home, v_away) in enumerate(zip(values_home, values_away)):
+                ax.text(v_home / max_values[s] + 0.02, index[s], str(v_home), va='center', color='black')
+                ax.text(v_away / max_values[s] + 0.02, index[s] + bar_height, str(v_away), va='center', color='black')
+
+            # Ustawienia osi
+            ax.set_yticks(index + bar_height / 2)
+            ax.spines['right'].set_visible(False)
+            ax.set_yticklabels(categories)
+            ax.invert_yaxis()  # Odwrocenie osi Y
+            ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2)
+            ax.xaxis.set_visible(False)  # Usunięcie podziałki osi x
+
+            st.pyplot(plt)
+        
+
+        # data += "</div>"
+        # st.markdown(data, unsafe_allow_html=True)
         if st.button(
             "Pokaż więcej statystyk",
             key=f"show_stats_button_{i}",
@@ -229,3 +262,5 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
         ):
             st.session_state["stats_id"] = df_filtered.iloc[i]
             st.switch_page("pagesHid/Statystyki Premier League.py")
+
+st.write(st.session_state)

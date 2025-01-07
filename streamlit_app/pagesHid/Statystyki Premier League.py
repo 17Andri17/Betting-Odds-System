@@ -466,79 +466,81 @@ plt.title('Prawdopodbieństwo zdarzeń', pad=10)
 plt.show()
 plt.tight_layout()
 
+col1, col2, col3, col4 = st.columns([1,4,4,1])
+
 st.write("<div style='display: block; justify-content: center; width:60%'>", unsafe_allow_html=True)
-st.pyplot(fig2)
-st.write("</div>", unsafe_allow_html=True)
+with col2:
+    st.pyplot(fig2)
+    st.write("</div>", unsafe_allow_html=True)
 
-st.write(fig)
+    st.write(fig)
 
+with col3:
+    filtr1, filtr2 = st.columns(2)
 
-filtr1, filtr2 = st.columns(2)
+    css = """
+    .st-key-team_filter *, .st-key-stat_filter *, .st-key-team_filter, .st-key-stat_filter{
+                cursor: pointer;
+            }
+    """
 
-css = """
-.st-key-team_filter *, .st-key-stat_filter *, .st-key-team_filter, .st-key-stat_filter{
-            cursor: pointer;
-        }
-"""
+    st.html(f"<style>{css}</style>")
 
-st.html(f"<style>{css}</style>")
+    with filtr1:
+        team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
+    with filtr2:
+        stat_filter = st.selectbox("Wybierz statystykę", options=["goals", "corner_kicks"], key="stat_filter")
 
-with filtr1:
-    team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
-with filtr2:
-    stat_filter = st.selectbox("Wybierz statystykę", options=["goals", "corner_kicks"], key="stat_filter")
+    def select_last_matches(df, team, date, n, where="all"):
+        if where == "home":
+            team_matches = df[(df["home_team"] == team) & (df["date"]<date)]
+        elif where == "away":
+            team_matches = df[(df["away_team"] == team) & (df["date"]<date)]
+        else:
+            team_matches = df[((df["home_team"] == team) | (df["away_team"] == team)) & (df["date"]<date)]
+        team_matches_sorted = team_matches.sort_values(by="date", ascending=False)
+        return team_matches_sorted.head(n)
 
-def select_last_matches(df, team, date, n, where="all"):
-    if where == "home":
-        team_matches = df[(df["home_team"] == team) & (df["date"]<date)]
-    elif where == "away":
-        team_matches = df[(df["away_team"] == team) & (df["date"]<date)]
-    else:
-        team_matches = df[((df["home_team"] == team) | (df["away_team"] == team)) & (df["date"]<date)]
-    team_matches_sorted = team_matches.sort_values(by="date", ascending=False)
-    return team_matches_sorted.head(n)
+    def get_stat(df, team, stat):
+        df[stat] = df.apply(lambda x: x["home_" + stat] if x["home_team"] == team else x["away_" + stat], axis=1)
+        df["new_date"] = df["date"].apply(lambda x: str(x)[5:7]+"."+str(x)[8:10])
+        return df[[stat, "new_date"]]
 
-def get_stat(df, team, stat):
-    df[stat] = df.apply(lambda x: x["home_" + stat] if x["home_team"] == team else x["away_" + stat], axis=1)
-    df["new_date"] = df["date"].apply(lambda x: str(x)[5:7]+"."+str(x)[8:10])
-    return df[[stat, "new_date"]]
+    team = team_filter
+    stat = stat_filter
+    date = pd.to_datetime("2024-05-11")
+    n = 10
+    last_matches = select_last_matches(matches, team, date, n)
+    stat_df = get_stat(last_matches, team, stat)
+    threshold = 1.5
 
-team = team_filter
-stat = stat_filter
-date = pd.to_datetime("2024-05-11")
-n = 10
-last_matches = select_last_matches(matches, team, date, n)
-stat_df = get_stat(last_matches, team, stat)
-threshold = 1.5
+    # Set colors: green if above threshold, red otherwise
+    colors = ["green" if val > threshold else "red" for val in stat_df[stat]]
 
-# Set colors: green if above threshold, red otherwise
-colors = ["green" if val > threshold else "red" for val in stat_df[stat]]
+    # Plot the bar chart
+    fig3 = plt.figure(figsize=(10, 6))
+    bars = plt.bar(stat_df["new_date"], stat_df[stat], color=colors)
 
-# Plot the bar chart
-fig3 = plt.figure(figsize=(10, 6))
-bars = plt.bar(stat_df["new_date"], stat_df[stat], color=colors)
+    # Add threshold line
+    plt.axhline(y=threshold, color="gray", linestyle="--", label=f"Linia = {threshold}")
 
-# Add threshold line
-plt.axhline(y=threshold, color="gray", linestyle="--", label=f"Linia = {threshold}")
+    # Add value labels on top of bars
+    for bar in bars:
+        height = bar.get_height()
+        if height == 0:
+            plt.text(bar.get_x() + bar.get_width() / 2, height, str(height),
+                ha="center", va="bottom", fontsize=20)
+        else:
+            plt.text(bar.get_x() + bar.get_width() / 2, height-0.4, str(height),
+                ha="center", va="bottom", fontsize=20)
 
-# Add value labels on top of bars
-for bar in bars:
-    height = bar.get_height()
-    if height == 0:
-        plt.text(bar.get_x() + bar.get_width() / 2, height, str(height),
-             ha="center", va="bottom", fontsize=20)
-    else:
-        plt.text(bar.get_x() + bar.get_width() / 2, height-0.4, str(height),
-             ha="center", va="bottom", fontsize=20)
+    # Chart styling
+    plt.title(stat.capitalize() + " dla " + team + " w ostatnich " + str(n) + " meczach")
+    plt.xlabel("Mecze")
+    plt.ylabel(stat)
+    plt.legend()
+    plt.tight_layout()
 
-# Chart styling
-plt.title(stat.capitalize() + " dla " + team + " w ostatnich " + str(n) + " meczach")
-plt.xlabel("Mecze")
-plt.ylabel(stat)
-plt.legend()
-plt.tight_layout()
-
-# Show plot
-plt.show()
-
-st.write(fig3)
+    # Show plot
+    plt.show()
+    st.write(fig3)
