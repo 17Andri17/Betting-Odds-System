@@ -5,14 +5,6 @@ import runpy
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
-css = """
-    .st-emotion-cache-1fttcpj eczjsme15{
-    display: none;
-    }
-"""
-
-st.html(f"<style>{css}</style>")
-
 def navbar():
     cols = st.columns(6)
     with cols[0]:
@@ -105,7 +97,9 @@ table = standings_filtered[selected_columns_standings]
 table['place'] = range(1, len(table) + 1)
 table = table.set_index('place')
 table.columns = [ 'Zespół', 'Mecze rozegrane', 'Wygrane', 'Remisy', 'Porażki', 'Różnica bramek', 'Bramki strzelone', 'Bramki stracone', 'Punkty']
-st.table(table)
+col1, col2, col3 = st.columns([1,4,1])
+with col2:
+    st.table(table)
 
 filtr1, filtr2, filtr3, filtr4 = st.columns(4)
 
