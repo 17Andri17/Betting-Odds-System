@@ -4,9 +4,26 @@ import pandas as pd
 
 st.set_page_config(layout="wide")
 
-pg = st.navigation([st.Page("Kursomat.py"),
-                    st.Page("pagesVis/Premier League.py"),
-                    st.Page("pagesHid/Statystyki Premier League.py")], position = "hidden")
+homepage = st.Page(
+    "Kursomat.py",
+    title="Strona Główna",
+    icon="🏠",
+    default=True,
+)
+
+premier_league = st.Page(
+    "pagesVis/Premier League.py",
+    title="Premier League",
+    icon="⚽",
+)
+
+premier_league_stats = st.Page(
+    "pagesHid/Statystyki Premier League.py",
+    title="Statystyki Premier League",
+    icon="📊",
+)
+
+pg = st.navigation(pages = [homepage, premier_league, premier_league_stats], position="hidden")
 
 st.sidebar.title("Navigation")
 

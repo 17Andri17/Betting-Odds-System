@@ -30,20 +30,26 @@ def navbar():
 
 navbar()
 
+# Ustawianie wszystkich filtrów na początkowe wartości
+def setFilters():
+    st.session_state['PLround_filter1'] = 1
+    st.session_state['PLround_filter2'] = 38
+    st.session_state['PLteam_filter'] = []
+    st.session_state['PLnumber_of_matches'] = 10
+
 # Chowanie statystyk po zmianie filtrów
 def restartStats():
     for i in range (number_of_matches):
         if f"show_row_{i}" in st.session_state:
             st.session_state[f"show_row_{i}"] = False
-    st.session_state['round_filter2'] = round_filter2
-    st.session_state['round_filter1'] = round_filter1
 
 # Pokazywanie statystyk dla i-tego meczu
 def showStats(i):
     st.session_state[f"show_row_{i}"] = not st.session_state.get(f"show_row_{i}", False)
 
+# chyba do usunięcia
 def showDateButton():
-    if len(season_filter) == 0:
+    if len(season_filter_matches) == 0:
         st.session_state["show_table"] = True
     else:
         st.session_state["show_table"] = False
@@ -55,52 +61,46 @@ standings = st.session_state["standingsPL"]
 df_filtered=df
 standings_filtered=standings
 
-# Na razie nieużywane - do zmiany suwaków filtrowych
-if 'round_filter1' not in st.session_state:
-    st.session_state['round_filter1'] = 1
-
-if 'round_filter2' not in st.session_state:
-    st.session_state['round_filter2'] = 38
-
 # Tytuł i tworzenie filtrów
 st.title("Premier League")
-# Wybieranie tabeli
-season_filter = st.multiselect("Wybierz sezon, z którego chcesz zobaczyć tabelę oraz statystyki",
-    options = standings['season'].unique(), on_change=showDateButton, max_selections=1)
+# Filtry dla tabeli
+col1, col2 = st.columns(2)
+with col1:
+    season_filter = st.multiselect("Wybierz sezon, z którego chcesz zobaczyć tabelę oraz statystyki",
+        options = standings['season'].unique(), on_change=showDateButton, max_selections=1)
 
-season_filter2 = season_filter
+    if season_filter == []:
+        season_filter_matches = sorted(standings['season'].unique(), reverse=True)[0]
+    else:
+        season_filter_matches = season_filter[0]
 
-if season_filter == []:
-    season_filter2=sorted(standings['season'].unique(), reverse=True)[0]
-    season_filter_matches = season_filter2
-else:
-    season_filter_matches = season_filter2[0]
+    date_standings = max(standings_filtered['date'].dt.strftime('%Y-%m-%d'))
 
-date_standings = max(standings_filtered['date'].dt.strftime('%Y-%m-%d'))
-selected_season = season_filter2
+with col2:
+    if len(season_filter) == 1:
+        standings_filtered = standings[standings['season'] == season_filter_matches]
+        date_standings = st.date_input("Wybierz datę tabeli",
+            min_value = min(standings_filtered['date']),
+            max_value = max(standings_filtered['date']),
+            value = max(standings_filtered['date']))
 
-if st.session_state.get("show_table", False):
-    selected_season = season_filter2[0]
-    standings_filtered = standings[standings['season'] == selected_season]
-    date_standings = st.date_input("Wybierz datę tabeli",
-        min_value = min(standings_filtered['date']),
-        max_value = max(standings_filtered['date']),
-        value = max(standings_filtered['date']))
+    possible_date = max(standings_filtered[standings_filtered["date"] <= pd.to_datetime(date_standings)]["date"].unique())
+    standings_filtered = standings_filtered[standings_filtered["date"] == possible_date]
 
-possible_date = max(standings_filtered[standings_filtered["date"] <= pd.to_datetime(date_standings)]["date"].unique())
-standings_filtered = standings_filtered[standings_filtered["date"] == possible_date]
-
-st.header(f"Stan tabeli Premier League w sezonie {selected_season} na {date_standings}")
+# Filtrowanie i wyświetlanie tabeli
+st.subheader(f"Tabela Premier League w sezonie {season_filter_matches}")
+st.caption(f"Stan na: {date_standings}")
 
 selected_columns_standings = ['team', 'matches_played', 'wins', 'draws', 'defeats', 'goal_difference', 'goals', 'goals_conceded', 'points']
 table = standings_filtered[selected_columns_standings]
 table['place'] = range(1, len(table) + 1)
 table = table.set_index('place')
 table.columns = [ 'Zespół', 'Mecze rozegrane', 'Wygrane', 'Remisy', 'Porażki', 'Różnica bramek', 'Bramki strzelone', 'Bramki stracone', 'Punkty']
-col1, col2, col3 = st.columns([1,4,1])
+col1, col2, col3 = st.columns([1,5,1])
 with col2:
     st.table(table)
 
+# Filtry dla meczów
 filtr1, filtr2, filtr3, filtr4 = st.columns(4)
 
 with filtr1:
@@ -128,7 +128,7 @@ df_filtered.sort_values(by="round", ascending=False, inplace=True)
 
 # Wypisywanie danych
 for i in range(min(number_of_matches, df_filtered['home_team'].count())):
-    col1, col2, col3, col4 = st.columns([4,9,2,2])
+    col1, col2, col3, col4, col5, col6 = st.columns([3,5,2,5,2,2])
     with col1:
         st.markdown(f"""
                 <div style="text-align: center; font-size: 15px;
@@ -136,7 +136,7 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
                     padding: 20px 0;
                     margin: 10px;
                     margin-top: 0;
-                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['date']}
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['date']} {df_filtered.iloc[i]['time']}
                 </div>""", unsafe_allow_html=True)
     with col2:
         st.markdown(f"""
@@ -145,7 +145,7 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
                     padding: 20px 0;
                     margin: 10px;
                     margin-top: 0;
-                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['home_team']} {df_filtered.iloc[i]['home_goals']} - {df_filtered.iloc[i]['away_goals']} {df_filtered.iloc[i]['away_team']}
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['home_team']}
                 </div>""", unsafe_allow_html=True)
     with col3:
         st.markdown(f"""
@@ -154,9 +154,27 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
                     padding: 20px 0;
                     margin: 10px;
                     margin-top: 0;
-                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">Kolejka {df_filtered.iloc[i]['round']} 
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['home_goals']} - {df_filtered.iloc[i]['away_goals']}
                 </div>""", unsafe_allow_html=True)
     with col4:
+        st.markdown(f"""
+                <div style="text-align: center; font-size: 15px;
+                    background-color: #f8f9ab; 
+                    padding: 20px 0;
+                    margin: 10px;
+                    margin-top: 0;
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">{df_filtered.iloc[i]['away_team']}
+                </div>""", unsafe_allow_html=True)
+    with col5:
+        st.markdown(f"""
+                <div style="text-align: center; font-size: 15px;
+                    background-color: #f8f9ab; 
+                    padding: 20px 0;
+                    margin: 10px;
+                    margin-top: 0;
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">Kolejka {df_filtered.iloc[i]['round']} 
+                </div>""", unsafe_allow_html=True)
+    with col6:
         st.markdown('<div class="custom-button">', unsafe_allow_html=True)
         st.button(
             "Pokaż statystyki",

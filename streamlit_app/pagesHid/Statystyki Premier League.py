@@ -292,29 +292,13 @@ def get_starters(group):
     return group
 
 
-players_23_24 = pd.read_csv("../fbref/data/players_pl_23-24_fbref.csv")
-players_22_23 = pd.read_csv("../fbref/data/players_pl_22-23_fbref.csv")
-players_21_22 = pd.read_csv("../fbref/data/players_pl_21-22_fbref.csv")
-players_20_21 = pd.read_csv("../fbref/data/players_pl_20-21_fbref.csv")
-players_19_20 = pd.read_csv("../fbref/data/players_pl_19-20_fbref.csv")
-players_18_19 = pd.read_csv("../fbref/data/players_pl_18-19_fbref.csv")
-players = pd.concat([players_23_24, players_22_23, players_21_22, players_20_21, players_19_20, players_18_19], ignore_index=True)
-players = players.rename(columns={"position": "position_x"})
+def load_data():
+    players = st.session_state["playersPL"]
+    matches = st.session_state["dfPL"]
+    odds = st.session_state["oddsPL"]
+    return players, matches, odds
 
-matches = pd.read_csv("../fbref/data/matches_with_rolling_stats_pl.csv")
-matches["formation_home"] = matches["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
-matches["formation_away"] = matches["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
-matches["formation_home"] = matches["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
-matches["formation_away"] = matches["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
-
-
-odds_23_24 = pd.read_csv("../fbref/data/E0_23-24.csv")
-odds_22_23 = pd.read_csv("../fbref/data/E0_22-23.csv")
-odds_21_22 = pd.read_csv("../fbref/data/E0_21-22.csv")
-odds_20_21 = pd.read_csv("../fbref/data/E0_20-21.csv")
-odds_19_20 = pd.read_csv("../fbref/data/E0_19-20.csv")
-odds_18_19 = pd.read_csv("../fbref/data/E0_18-19.csv")
-odds = pd.concat([odds_23_24, odds_22_23, odds_21_22, odds_20_21, odds_19_20, odds_18_19], ignore_index=True)
+players, matches, odds = load_data()
 
 team_name_mapping = {
     'Burnley': 'Burnley',
@@ -466,16 +450,98 @@ plt.title('Prawdopodbieństwo zdarzeń', pad=10)
 plt.show()
 plt.tight_layout()
 
-col1, col2, col3, col4 = st.columns([1,4,4,1])
+col2, col3 = st.columns(2)
 
-st.write("<div style='display: block; justify-content: center; width:60%'>", unsafe_allow_html=True)
+
+home_matches = matches[(matches["date"] < date) &
+    ((matches["home_team"] == home_team) | (matches["away_team"] == home_team)) ]
+away_matches = matches[(matches["date"] < date) &
+    ((matches["home_team"] == away_team) | (matches["away_team"] == away_team)) ]
+home_matches = home_matches[["date", "time", "home_team", "home_goals", "away_goals", "away_team"]]
+home_matches = home_matches.sort_values(by="date", ascending=False)
+away_matches = away_matches[["date", "time", "home_team", "home_goals", "away_goals", "away_team"]]
+away_matches = away_matches.sort_values(by="date", ascending=False)
 with col2:
-    st.pyplot(fig2)
-    st.write("</div>", unsafe_allow_html=True)
+    data = f"""
+                <div style="text-align: center; font-size: 15px;
+                    background-color: #f8f9fa; 
+                    border-radius: 10px; 
+                    padding: 5px; 
+                    margin: 5px;
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
+                <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze {home_team}</div>
+                """
+    
+    if len(home_matches) == 0:
+        data += "<div style='font-size: 20px;'>Brak danych na temat ostatnich meczów</div>"
 
+    for j in range(min(5, len(home_matches))):
+        data += f"""
+        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+            <div style="width: 120px;">{home_matches.iloc[j]['date'].date()} {home_matches.iloc[j]['time']}</div>
+            <div style="width: 200px;">{home_matches.iloc[j]['home_team']}</div>
+            <div style="width: 100px;">{home_matches.iloc[j]['home_goals']} - {home_matches.iloc[j]['away_goals']}</div>
+            <div style="width: 200px;">{home_matches.iloc[j]['away_team']}</div>
+        """
+        if home_matches.iloc[j]['home_team'] == home_team:
+            if home_matches.iloc[j]['home_goals'] > home_matches.iloc[j]['away_goals']:
+                data += "<div style='width: 50px; background-color: green;'>W</div>"
+            elif home_matches.iloc[j]['home_goals'] < home_matches.iloc[j]['away_goals']:
+                data += "<div style='width: 50px; background-color: red;'>L</div>"
+            else:
+                data += "<div style='width: 50px; background-color: gray;'>D</div>"
+        else:
+            if home_matches.iloc[j]['home_goals'] > home_matches.iloc[j]['away_goals']:
+                data += "<div style='width: 50px; background-color: red;'>L</div>"
+            elif home_matches.iloc[j]['home_goals'] < home_matches.iloc[j]['away_goals']:
+                data += "<div style='width: 50px; background-color: green;'>W</div>"
+            else:
+                data += "<div style='width: 50px; background-color: gray;'>D</div>"
+        data+="</div>"
+    data += "</div>"
+    st.markdown(data, unsafe_allow_html=True)
+    st.pyplot(fig2)
     st.write(fig)
 
 with col3:
+    data = f"""
+                <div style="text-align: center; font-size: 15px;
+                    background-color: #f8f9fa; 
+                    border-radius: 10px; 
+                    padding: 5px; 
+                    margin: 5px;
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
+                <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze {away_team}</div>
+                """
+    
+    if len(away_matches) == 0:
+        data += "<div style='font-size: 20px;'>Brak danych na temat ostatnich meczów</div>"
+
+    for j in range(min(5, len(away_matches))):
+        data += f"""
+        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+            <div style="width: 120px;">{away_matches.iloc[j]['date'].date()} {away_matches.iloc[j]['time']}</div>
+            <div style="width: 200px;">{away_matches.iloc[j]['home_team']}</div>
+            <div style="width: 100px;">{away_matches.iloc[j]['home_goals']} - {away_matches.iloc[j]['away_goals']}</div>
+            <div style="width: 200px;">{away_matches.iloc[j]['away_team']}</div>
+        """
+        if away_matches.iloc[j]['home_team'] == home_team:
+            if away_matches.iloc[j]['home_goals'] > away_matches.iloc[j]['away_goals']:
+                data += "<div style='width: 50px; background-color: green;'>W</div>"
+            elif away_matches.iloc[j]['home_goals'] < away_matches.iloc[j]['away_goals']:
+                data += "<div style='width: 50px; background-color: red;'>L</div>"
+            else:
+                data += "<div style='width: 50px; background-color: gray;'>D</div>"
+        else:
+            if away_matches.iloc[j]['home_goals'] > away_matches.iloc[j]['away_goals']:
+                data += "<div style='width: 50px; background-color: red;'>L</div>"
+            elif away_matches.iloc[j]['home_goals'] < away_matches.iloc[j]['away_goals']:
+                data += "<div style='width: 50px; background-color: green;'>W</div>"
+            else:
+                data += "<div style='width: 50px; background-color: gray;'>D</div>"
+        data+="</div>"
+    data += "</div>"
+    st.markdown(data, unsafe_allow_html=True)
     filtr1, filtr2 = st.columns(2)
 
     css = """
@@ -544,3 +610,31 @@ with col3:
     # Show plot
     plt.show()
     st.write(fig3)
+
+    h2h = matches[(((matches["home_team"] == home_team) & (matches["away_team"] == away_team)) | ((matches["home_team"] == away_team) & (matches["away_team"] == home_team))) & (matches["date"] < date)]
+    h2h = h2h[["date", "time", "home_team", "home_goals", "away_goals", "away_team"]]
+    h2h = h2h.sort_values(by="date", ascending=False)
+    data = """
+                <div style="text-align: center; font-size: 15px;
+                    background-color: #f8f9fa; 
+                    border-radius: 10px; 
+                    padding: 5px; 
+                    margin: 5px;
+                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
+                <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze pomiędzy drużynami</div>
+                """
+    
+    if len(h2h) == 0:
+        data += "<div style='font-size: 20px;'>Brak danych na temat meczów pomiędzy drużynami</div>"
+
+    for j in range(len(h2h)):
+        data += f"""
+        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+            <div style="width: 120px;">{h2h.iloc[j]['date'].date()} {h2h.iloc[j]['time']}</div>
+            <div style="width: 200px;">{h2h.iloc[j]['home_team']}</div>
+            <div style="width: 100px;">{h2h.iloc[j]['home_goals']} - {h2h.iloc[j]['away_goals']}</div>
+            <div style="width: 200px;">{h2h.iloc[j]['away_team']}</div>
+        </div>
+        """
+    data += "</div>"
+    st.markdown(data, unsafe_allow_html=True)
