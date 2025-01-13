@@ -30,6 +30,8 @@ navbar()
 @st.cache_data
 def loadData():
     df = pd.read_csv("../fbref/data/matches_with_rolling_stats_pl.csv")
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
+    df["date"] = df["date"].astype(str)
     df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
     df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
     df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
@@ -43,6 +45,8 @@ def loadData():
     players_18_19 = pd.read_csv("../fbref/data/players_pl_18-19_fbref.csv")
     players = pd.concat([players_23_24, players_22_23, players_21_22, players_20_21, players_19_20, players_18_19], ignore_index=True)
     players = players.rename(columns={"position": "position_x"})
+    players["date"] = pd.to_datetime(players["date"], errors="coerce")  # Najpierw konwersja do datetime
+    players["date"] = players["date"].astype(str)
 
     standings = pd.read_csv("../fbref/standings_pl.csv")
     standings['date']=pd.to_datetime(standings['date'])

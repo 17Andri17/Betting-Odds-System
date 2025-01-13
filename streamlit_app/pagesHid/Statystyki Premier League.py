@@ -293,9 +293,9 @@ def get_starters(group):
 
 
 def load_data():
-    players = st.session_state["playersPL"]
-    matches = st.session_state["dfPL"]
-    odds = st.session_state["oddsPL"]
+    players = st.session_state["playersPL"].copy()
+    matches = st.session_state["dfPL"].copy()
+    odds = st.session_state["oddsPL"].copy()
     return players, matches, odds
 
 players, matches, odds = load_data()

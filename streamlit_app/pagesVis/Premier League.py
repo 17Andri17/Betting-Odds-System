@@ -56,10 +56,10 @@ def showDateButton():
     restartStats()
 
 
-df = st.session_state["dfPL"]
-standings = st.session_state["standingsPL"]
-df_filtered=df
-standings_filtered=standings
+df = st.session_state["dfPL"].copy()
+standings = st.session_state["standingsPL"].copy()
+df_filtered=df.copy()
+standings_filtered=standings.copy()
 
 # Tytuł i tworzenie filtrów
 st.title("Premier League")
