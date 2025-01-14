@@ -200,19 +200,19 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
         categories = ["Posiadanie piłki", "Strzały", "Strzały na bramkę", "Rzuty wolne", "Rzuty rózne",
             "Spalone", "Faule", "Żółte kartki", "Czerwone kartki", "Podania", "Celne podania"]
         # trzeba będzie dodać Ball Possession jako pierwsze
-        values_home = ["54", df_filtered.iloc[i]["home_shots"],
+        home_stats = ["54", df_filtered.iloc[i]["home_shots"],
             df_filtered.iloc[i]["home_shots_on_target"], df_filtered.iloc[i]["home_fouled"],
             df_filtered.iloc[i]["home_corner_kicks"], df_filtered.iloc[i]["home_offsides"], df_filtered.iloc[i]["home_fouls"],
             df_filtered.iloc[i]["home_cards_yellow"], df_filtered.iloc[i]["home_cards_red"],
             df_filtered.iloc[i]["home_passes"], df_filtered.iloc[i]["home_passes_completed"]]
-        values_away = ["46", df_filtered.iloc[i]["away_shots"],
+        away_stats = ["46", df_filtered.iloc[i]["away_shots"],
             df_filtered.iloc[i]["away_shots_on_target"], df_filtered.iloc[i]["away_fouled"],
             df_filtered.iloc[i]["away_corner_kicks"], df_filtered.iloc[i]["away_offsides"], df_filtered.iloc[i]["away_fouls"],
             df_filtered.iloc[i]["away_cards_yellow"], df_filtered.iloc[i]["away_cards_red"],
             df_filtered.iloc[i]["away_passes"], df_filtered.iloc[i]["away_passes_completed"]]
 
-        values_home = [int(v) for v in values_home]
-        values_away = [int(v) for v in values_away]
+        home_stats = [int(v) for v in home_stats]
+        away_stats = [int(v) for v in away_stats]
 
         # data = """
         #     <div style="text-align: center; font-size: 15px;
@@ -234,35 +234,57 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
         # Funkcja do rysowania pojedynczego wykresu dla każdej statystyki
         col1, col2, col3 = st.columns([2,9,2])
         with col2:
-            max_values = np.maximum(values_home, values_away)
-            normalized_home = np.array(values_home) / max_values
-            normalized_away = np.array(values_away) / max_values
+            # Suma dla każdej statystyki (do obliczenia udziału procentowego)
+            total_stats = np.array(home_stats) + np.array(away_stats)
+            home_ratios = np.array(home_stats) / total_stats
+            away_ratios = np.array(away_stats) / total_stats
+                
 
-            # Parametry wykresu
-            bar_height = 0.8
-            bar_spacing = 1.2
-            index = np.arange(len(categories) * 2, step=2)
+            # Ustawienia wykresu
+            fig, ax = plt.subplots(figsize=(8, len(categories) * 0.72))
+            ax.set_facecolor("#1A1A1A")  # Ciemne tło
 
-            fig, ax = plt.subplots(figsize=(10, 7))
+            # Generowanie wykresu
+            for i, (category, home_ratio, away_ratio) in enumerate(zip(categories, home_ratios, away_ratios)):
+                y_position = len(categories) - i  # Pozycja w osi Y (odwracamy kolejność)
+                home_color = "#003366"
+                away_color = "#003366"
+                if home_ratio > away_ratio:
+                    home_color = "#CC0033"
+                elif home_ratio < away_ratio:
+                    away_color = "#CC0033"
+                
+                # Tekst statystyki (nad słupkami)
+                ax.text(0, y_position + 0.3, category, ha="center", va="center", fontsize=12, color="black", weight="bold")
+                
+                # Słupki dla gospodarzy (lewa strona)
+                ax.barh(
+                    y_position, -home_ratio, height=0.2, color=home_color, align="center", 
+                    zorder=3, edgecolor="black", linewidth=1.5
+                )
+                
+                # Słupki dla gości (prawa strona)
+                ax.barh(
+                    y_position, away_ratio, height=0.2, color=away_color, align="center", 
+                    zorder=3, edgecolor="black", linewidth=1.5
+                )
+                
 
-            # Rysowanie slupkow
-            ax.barh(index, normalized_home, height=bar_height, color='crimson', label=df_filtered.iloc[i]['home_team'], align='center')
-            ax.barh(index + bar_height, normalized_away, height=bar_height, color='darkblue', label=df_filtered.iloc[i]['away_team'], align='center')
+                
+                # Tekst (procenty/ilości przy końcach słupków)
+                ax.text(-home_ratio - 0.02, y_position, f"{home_stats[i]}", ha="right", va="center", fontsize=10, color="black")
+                ax.text(away_ratio + 0.02, y_position, f"{away_stats[i]}", ha="left", va="center", fontsize=10, color="black")
 
-            # Dodanie wartosci tekstowych na wykresie
-            for s, (v_home, v_away) in enumerate(zip(values_home, values_away)):
-                ax.text(v_home / max_values[s] + 0.02, index[s], str(v_home), va='center', color='black')
-                ax.text(v_away / max_values[s] + 0.02, index[s] + bar_height, str(v_away), va='center', color='black')
+            # Styl osi
+            ax.set_xlim(-1, 1)  # Oś X od -1 do 1 (po równo na obie strony)
+            ax.set_ylim(0.5, len(categories) + 0.5)  # Oś Y dla odpowiedniego rozmieszczenia
+            ax.axis("off")  # Usunięcie osi, ponieważ nie są potrzebne
 
-            # Ustawienia osi
-            ax.set_yticks(index + bar_height / 2)
-            ax.spines['right'].set_visible(False)
-            ax.set_yticklabels(categories)
-            ax.invert_yaxis()  # Odwrocenie osi Y
-            ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2)
-            ax.xaxis.set_visible(False)  # Usunięcie podziałki osi x
-
+            # Tytuł wykresu
+            plt.tight_layout()
             st.pyplot(plt)
+
+
         
 
         # data += "</div>"

@@ -299,6 +299,7 @@ def load_data():
     return players, matches, odds
 
 players, matches, odds = load_data()
+matches2 = matches.copy()
 
 team_name_mapping = {
     'Burnley': 'Burnley',
@@ -574,7 +575,6 @@ with col3:
 
     team = team_filter
     stat = stat_filter
-    date = pd.to_datetime("2024-05-11")
     n = 10
     last_matches = select_last_matches(matches, team, date, n)
     stat_df = get_stat(last_matches, team, stat)
@@ -611,12 +611,12 @@ with col3:
     plt.show()
     st.write(fig3)
 
-    h2h = matches[(((matches["home_team"] == home_team) & (matches["away_team"] == away_team)) | ((matches["home_team"] == away_team) & (matches["away_team"] == home_team))) & (matches["date"] < date)]
+    h2h = matches2[((matches2["home_team"] == home_team) & (matches2["away_team"] == away_team)) |
+            ((matches2["home_team"] == away_team) & (matches2["away_team"] == home_team))]
     h2h = h2h[["date", "time", "home_team", "home_goals", "away_goals", "away_team"]]
     h2h = h2h.sort_values(by="date", ascending=False)
     data = """
                 <div style="text-align: center; font-size: 15px;
-                    background-color: #f8f9fa; 
                     border-radius: 10px; 
                     padding: 5px; 
                     margin: 5px;
@@ -626,11 +626,13 @@ with col3:
     
     if len(h2h) == 0:
         data += "<div style='font-size: 20px;'>Brak danych na temat meczów pomiędzy drużynami</div>"
-
     for j in range(len(h2h)):
+        if h2h.iloc[j]['date'] == date:
+            data += """<div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 15px; background-color:Aqua;">"""
+        else:
+            data += """<div style="display: flex; justify-content: center; margin-bottom: 5px;">"""
         data += f"""
-        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
-            <div style="width: 120px;">{h2h.iloc[j]['date'].date()} {h2h.iloc[j]['time']}</div>
+            <div style="width: 120px;">{h2h.iloc[j]['date']} {h2h.iloc[j]['time']}</div>
             <div style="width: 200px;">{h2h.iloc[j]['home_team']}</div>
             <div style="width: 100px;">{h2h.iloc[j]['home_goals']} - {h2h.iloc[j]['away_goals']}</div>
             <div style="width: 200px;">{h2h.iloc[j]['away_team']}</div>
