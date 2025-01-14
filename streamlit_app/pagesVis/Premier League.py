@@ -32,8 +32,6 @@ navbar()
 
 # Ustawianie wszystkich filtrów na początkowe wartości
 def setFilters():
-    st.session_state['PLround_filter1'] = 1
-    st.session_state['PLround_filter2'] = 38
     st.session_state['PLteam_filter'] = []
     st.session_state['PLnumber_of_matches'] = 10
 
@@ -90,6 +88,7 @@ with col2:
 # Filtrowanie i wyświetlanie tabeli
 st.subheader(f"Tabela Premier League w sezonie {season_filter_matches}")
 st.caption(f"Stan na: {date_standings}")
+date_standings = pd.to_datetime(date_standings)
 
 selected_columns_standings = ['team', 'matches_played', 'wins', 'draws', 'defeats', 'goal_difference', 'goals', 'goals_conceded', 'points']
 table = standings_filtered[selected_columns_standings]
@@ -101,12 +100,8 @@ with col2:
     st.table(table)
 
 # Filtry dla meczów
-filtr1, filtr2, filtr3, filtr4 = st.columns(4)
+filtr3, filtr4 = st.columns(2)
 
-with filtr1:
-    round_filter1 = st.slider("Wybierz kolejkę początkową", min_value=1, max_value=max(df_filtered['round']), on_change=restartStats)
-with filtr2:
-    round_filter2 = st.slider("Wybierz kolejkę końcową", min_value=1, max_value=max(df_filtered['round']), value=38, on_change=restartStats)
 with filtr3:
     team_filter = st.multiselect("Wybierz drużynę", options = sorted(df_filtered['home_team'].unique()), on_change=restartStats)
 with filtr4:
@@ -119,12 +114,11 @@ team_filter2=team_filter
 
 if team_filter==[]:
     team_filter2=df['home_team'].unique()
-df_filtered=df[(df["round"]>=round_filter1)
-               & (df['round']<=round_filter2)
+df_filtered=df[(pd.to_datetime(df['date'])<=date_standings)
                & (df['season'] == season_filter_matches)
                & ((df['home_team'].isin(team_filter2))
                   | (df['away_team'].isin(team_filter2)))]
-df_filtered.sort_values(by="round", ascending=False, inplace=True)
+df_filtered.sort_values(by=["date", "time", "round"], ascending=False, inplace=True)
 
 # Wypisywanie danych
 for i in range(min(number_of_matches, df_filtered['home_team'].count())):
@@ -232,7 +226,7 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
         #     </div>
         #     """
         # Funkcja do rysowania pojedynczego wykresu dla każdej statystyki
-        col1, col2, col3 = st.columns([2,9,2])
+        col1, col2, col3 = st.columns([2,5,2])
         with col2:
             # Suma dla każdej statystyki (do obliczenia udziału procentowego)
             total_stats = np.array(home_stats) + np.array(away_stats)
@@ -241,12 +235,12 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
                 
 
             # Ustawienia wykresu
-            fig, ax = plt.subplots(figsize=(8, len(categories) * 0.72))
+            fig, ax = plt.subplots(figsize=(8, len(categories) * 0.4))
             ax.set_facecolor("#1A1A1A")  # Ciemne tło
 
             # Generowanie wykresu
-            for i, (category, home_ratio, away_ratio) in enumerate(zip(categories, home_ratios, away_ratios)):
-                y_position = len(categories) - i  # Pozycja w osi Y (odwracamy kolejność)
+            for j, (category, home_ratio, away_ratio) in enumerate(zip(categories, home_ratios, away_ratios)):
+                y_position = len(categories) - j  # Pozycja w osi Y (odwracamy kolejność)
                 home_color = "#003366"
                 away_color = "#003366"
                 if home_ratio > away_ratio:
@@ -255,25 +249,25 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
                     away_color = "#CC0033"
                 
                 # Tekst statystyki (nad słupkami)
-                ax.text(0, y_position + 0.3, category, ha="center", va="center", fontsize=12, color="black", weight="bold")
+                ax.text(0, y_position + 0.36, category, ha="center", va="center", fontsize=10, color="black", weight="bold")
                 
                 # Słupki dla gospodarzy (lewa strona)
                 ax.barh(
-                    y_position, -home_ratio, height=0.2, color=home_color, align="center", 
+                    y_position, -home_ratio, height=0.15, color=home_color, align="center", 
                     zorder=3, edgecolor="black", linewidth=1.5
                 )
                 
                 # Słupki dla gości (prawa strona)
                 ax.barh(
-                    y_position, away_ratio, height=0.2, color=away_color, align="center", 
+                    y_position, away_ratio, height=0.15, color=away_color, align="center", 
                     zorder=3, edgecolor="black", linewidth=1.5
                 )
                 
 
                 
                 # Tekst (procenty/ilości przy końcach słupków)
-                ax.text(-home_ratio - 0.02, y_position, f"{home_stats[i]}", ha="right", va="center", fontsize=10, color="black")
-                ax.text(away_ratio + 0.02, y_position, f"{away_stats[i]}", ha="left", va="center", fontsize=10, color="black")
+                ax.text(-home_ratio - 0.02, y_position, f"{home_stats[j]}", ha="right", va="center", fontsize=10, color="black")
+                ax.text(away_ratio + 0.02, y_position, f"{away_stats[j]}", ha="left", va="center", fontsize=10, color="black")
 
             # Styl osi
             ax.set_xlim(-1, 1)  # Oś X od -1 do 1 (po równo na obie strony)
@@ -283,9 +277,6 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
             # Tytuł wykresu
             plt.tight_layout()
             st.pyplot(plt)
-
-
-        
 
         # data += "</div>"
         # st.markdown(data, unsafe_allow_html=True)
