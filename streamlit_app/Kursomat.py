@@ -29,13 +29,18 @@ navbar()
 
 @st.cache_data
 def loadData():
-    df = pd.read_csv("../fbref/data/matches_with_rolling_stats_pl.csv")
+    df = pd.read_csv("../prepared_data.csv")
     df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
     df["date"] = df["date"].astype(str)
     df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
     df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
     df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
     df["formation_away"] = df["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
+    dfPL = df[df["league"] == "pl"]
+    dfLL = df[df["league"] == "ll"]
+    dfL1 = df[df["league"] == "l1"]
+    dfBun = df[df["league"] == "bl"]
+    dfSA = df[df["league"] == "sa"]
 
     players_23_24 = pd.read_csv("../fbref/data/players_pl_23-24_fbref.csv")
     players_22_23 = pd.read_csv("../fbref/data/players_pl_22-23_fbref.csv")
@@ -48,26 +53,50 @@ def loadData():
     players["date"] = pd.to_datetime(players["date"], errors="coerce")  # Najpierw konwersja do datetime
     players["date"] = players["date"].astype(str)
 
-    standings = pd.read_csv("../fbref/standings_pl.csv")
+    standings = pd.read_csv("../standings.csv")
     standings['date']=pd.to_datetime(standings['date'])
+    standingsPL = standings[standings["league"] == "pl"]
+    standingsLL = standings[standings["league"] == "ll"]
+    standingsL1 = standings[standings["league"] == "l1"]
+    standingsBun = standings[standings["league"] == "bl"]
+    standingsSA = standings[standings["league"] == "sa"]
 
-    odds_23_24 = pd.read_csv("../fbref/data/E0_23-24.csv")
-    odds_22_23 = pd.read_csv("../fbref/data/E0_22-23.csv")
-    odds_21_22 = pd.read_csv("../fbref/data/E0_21-22.csv")
-    odds_20_21 = pd.read_csv("../fbref/data/E0_20-21.csv")
-    odds_19_20 = pd.read_csv("../fbref/data/E0_19-20.csv")
-    odds_18_19 = pd.read_csv("../fbref/data/E0_18-19.csv")
-    odds = pd.concat([odds_23_24, odds_22_23, odds_21_22, odds_20_21, odds_19_20, odds_18_19], ignore_index=True)
+    odds = pd.read_csv("../odds.csv")
+    oddsPL = odds[odds["Div"] == "E0"]
+    oddsLL = odds[odds["Div"] == "SP1"]
+    oddsL1 = odds[odds["Div"] == "F1"]
+    oddsBun = odds[odds["Div"] == "D1"]
+    oddsSA = odds[odds["Div"] == "I1"]
 
-    return df, standings, players, odds
+    return dfPL, dfLL, dfL1, dfBun, dfSA, standingsPL, standingsLL, standingsL1, standingsBun, standingsSA, players, oddsPL, oddsLL, oddsL1, oddsBun, oddsSA
 
 # Sprawdzenie, czy dane są już w session_state
 if "dfPL" not in st.session_state:
-    df, standings, players, odds = loadData()
-    st.session_state["dfPL"] = df
-    st.session_state["standingsPL"] = standings
+    dfPL, dfLL, dfL1, dfBun, dfSA, standingsPL, standingsLL, standingsL1, standingsBun, standingsSA, players, oddsPL, oddsLL, oddsL1, oddsBun, oddsSA = loadData()
+    st.session_state["dfPL"] = dfPL
+    st.session_state["standingsPL"] = standingsPL
     st.session_state["playersPL"] = players
-    st.session_state["oddsPL"] = odds
+    st.session_state["oddsPL"] = oddsPL
+
+    st.session_state["dfLL"] = dfLL
+    st.session_state["standingsLL"] = standingsLL
+    #st.session_state["playersPL"] = players
+    st.session_state["oddsLL"] = oddsPL
+
+    st.session_state["dfL1"] = dfL1
+    st.session_state["standingsL1"] = standingsL1
+    #st.session_state["playersPL"] = players
+    st.session_state["oddsL1"] = oddsL1
+
+    st.session_state["dfBun"] = dfBun
+    st.session_state["standingsBun"] = standingsBun
+    #st.session_state["playersPL"] = players
+    st.session_state["oddsBun"] = oddsBun
+
+    st.session_state["dfSA"] = dfSA
+    st.session_state["standingsSA"] = standingsSA
+    #st.session_state["playersPL"] = players
+    st.session_state["oddsSA"] = oddsSA
 
 if st.button(
             "Premier League",

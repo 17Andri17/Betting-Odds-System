@@ -32,7 +32,7 @@ def navbar():
 
 navbar()
 
-
+@st.cache_data
 def create_team_structure(idx, formation, starting_eleven):
     
     formation_parts = list(map(int, formation.split('-')))
@@ -259,6 +259,7 @@ def create_team_structure(idx, formation, starting_eleven):
 
     return formation_array
 
+@st.cache_data
 def get_starters(group):
     starters = []
     group = group.sort_index()
@@ -291,6 +292,66 @@ def get_starters(group):
     group = group.iloc[starters]
     return group
 
+@st.cache_data
+def squads(players, date, home_team, away_team, formation_home, formation_away):
+    home_team_players = players[(players["date"]==date) & (players["team"]==home_team)]
+    away_team_players = players[(players["date"]==date) & (players["team"]==away_team)]
+
+    structure_away = create_team_structure(0, formation_away, get_starters(players[(players["team"] == away_team) & (players["date"] == date)]))
+    structure_home = create_team_structure(0, formation_home, get_starters(players[(players["team"] == home_team) & (players["date"] == date)]))
+
+
+    width = 100
+    pitch = Pitch(pitch_color='grass', line_color='white', stripe=False)
+    fig, ax = pitch.draw(figsize=(16, 8))
+
+    width = 120
+    height = 80
+    size = 36*36
+    y_shift_length = 15
+
+    color1 = '#2b83ba'
+    color2 = '#d7191c'
+
+    formation_3_x = [6, 24, 37, 50]
+    formation_4_x = [6, 21, 32, 43, 54]
+
+    formation_3_y = [0, 18, 18, 12]
+    formation_4_y = [0, 18, 18, 18, 12]
+
+
+    if len(structure_home) == 4:
+        formation_x = formation_3_x
+        formation_y = formation_3_y
+    else:
+        formation_x = formation_4_x
+        formation_y = formation_4_y
+    for i in range(len(structure_home)):
+        arr = structure_home[i]
+        y_shift_length = formation_y[i]
+        y_start = 40 - (len(arr) - 1) * y_shift_length / 2
+        for j in range(len(arr)):
+            ax.scatter(formation_x[i], y_start + y_shift_length*j, c=color1, s=size, edgecolors='black', label='Team A')
+            ax.text(formation_x[i], y_start + y_shift_length*j + 5.5, arr[j].split()[-1], horizontalalignment='center', fontsize = 13)
+
+    if len(structure_away) == 4:
+        formation_x = formation_3_x
+        formation_y = formation_3_y
+    else:
+        formation_x = formation_4_x
+        formation_y = formation_4_y
+    for i in range(len(structure_away)):
+        arr = structure_away[i]
+        y_shift_length = formation_y[i]
+        if i == len(structure_away) - 1 and len(arr) > 2:
+            y_shift_length = 28
+        y_start = 40 - (len(arr) - 1) * y_shift_length / 2
+        for j in range(len(arr)):
+            ax.scatter(width - formation_x[i], y_start + y_shift_length*j, c=color2, s=size, edgecolors='black', label='Team A')
+            ax.text(width - formation_x[i], y_start + y_shift_length*j + 5.5, arr[j].split()[-1], horizontalalignment='center', fontsize = 13)
+
+    plt.show()
+    st.write(fig)
 
 def load_data():
     players = st.session_state["playersPL"].copy()
@@ -366,63 +427,6 @@ away_goals = st.session_state['stats_id']["away_goals"]
 formation_home = st.session_state['stats_id']["formation_home"]
 formation_away = st.session_state['stats_id']["formation_away"]
 
-home_team_players = players[(players["date"]==date) & (players["team"]==home_team)]
-away_team_players = players[(players["date"]==date) & (players["team"]==away_team)]
-
-structure_away = create_team_structure(0, formation_away, get_starters(players[(players["team"] == away_team) & (players["date"] == date)]))
-structure_home = create_team_structure(0, formation_home, get_starters(players[(players["team"] == home_team) & (players["date"] == date)]))
-
-
-width = 100
-pitch = Pitch(pitch_color='grass', line_color='white', stripe=False)
-fig, ax = pitch.draw(figsize=(16, 8))
-
-width = 120
-height = 80
-size = 36*36
-y_shift_length = 15
-
-color1 = '#2b83ba'
-color2 = '#d7191c'
-
-formation_3_x = [6, 24, 37, 50]
-formation_4_x = [6, 21, 32, 43, 54]
-
-formation_3_y = [0, 18, 18, 12]
-formation_4_y = [0, 18, 18, 18, 12]
-
-
-if len(structure_home) == 4:
-    formation_x = formation_3_x
-    formation_y = formation_3_y
-else:
-    formation_x = formation_4_x
-    formation_y = formation_4_y
-for i in range(len(structure_home)):
-    arr = structure_home[i]
-    y_shift_length = formation_y[i]
-    y_start = 40 - (len(arr) - 1) * y_shift_length / 2
-    for j in range(len(arr)):
-        ax.scatter(formation_x[i], y_start + y_shift_length*j, c=color1, s=size, edgecolors='black', label='Team A')
-        ax.text(formation_x[i], y_start + y_shift_length*j + 5.5, arr[j].split()[-1], horizontalalignment='center', fontsize = 13)
-
-if len(structure_away) == 4:
-    formation_x = formation_3_x
-    formation_y = formation_3_y
-else:
-    formation_x = formation_4_x
-    formation_y = formation_4_y
-for i in range(len(structure_away)):
-    arr = structure_away[i]
-    y_shift_length = formation_y[i]
-    if i == len(structure_away) - 1 and len(arr) > 2:
-        y_shift_length = 28
-    y_start = 40 - (len(arr) - 1) * y_shift_length / 2
-    for j in range(len(arr)):
-        ax.scatter(width - formation_x[i], y_start + y_shift_length*j, c=color2, s=size, edgecolors='black', label='Team A')
-        ax.text(width - formation_x[i], y_start + y_shift_length*j + 5.5, arr[j].split()[-1], horizontalalignment='center', fontsize = 13)
-
-plt.show()
 
 st.markdown(f"""
                 <p style='text-align: center; font-size: 40px;'>{home_team}  {home_goals} - {away_goals}  {away_team}</p>
@@ -501,8 +505,6 @@ with col2:
         data+="</div>"
     data += "</div>"
     st.markdown(data, unsafe_allow_html=True)
-    st.pyplot(fig2)
-    st.write(fig)
 
 with col3:
     data = f"""
@@ -621,7 +623,7 @@ with col3:
                     padding: 5px; 
                     margin: 5px;
                     box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
-                <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze pomiędzy drużynami</div>
+                <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Mecze pomiędzy drużynami</div>
                 """
     
     if len(h2h) == 0:
@@ -629,8 +631,10 @@ with col3:
     for j in range(len(h2h)):
         if h2h.iloc[j]['date'] == date:
             data += """<div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 15px; background-color:Aqua;">"""
+        elif h2h.iloc[j]['date'] > date:
+            data += """<div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 15px; background-color:LightGreen;">"""
         else:
-            data += """<div style="display: flex; justify-content: center; margin-bottom: 5px;">"""
+            data += """<div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 15px; background-color:LightCoral;">"""
         data += f"""
             <div style="width: 120px;">{h2h.iloc[j]['date']} {h2h.iloc[j]['time']}</div>
             <div style="width: 200px;">{h2h.iloc[j]['home_team']}</div>
@@ -640,3 +644,7 @@ with col3:
         """
     data += "</div>"
     st.markdown(data, unsafe_allow_html=True)
+with col2:
+    st.pyplot(fig2)
+    with st.spinner("Generowanie składów"):
+        squads(players, date, home_team, away_team, formation_home, formation_away)

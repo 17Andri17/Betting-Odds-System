@@ -54,13 +54,13 @@ def showDateButton():
     restartStats()
 
 
-df = st.session_state["dfPL"].copy()
-standings = st.session_state["standingsPL"].copy()
+df = st.session_state["dfSA"].copy()
+standings = st.session_state["standingsSA"].copy()
 df_filtered=df.copy()
 standings_filtered=standings.copy()
 
 # Tytuł i tworzenie filtrów
-st.title("Premier League")
+st.title("Serie A")
 # Filtry dla tabeli
 col1, col2 = st.columns(2)
 with col1:
@@ -86,7 +86,7 @@ with col2:
     standings_filtered = standings_filtered[standings_filtered["date"] == possible_date]
 
 # Filtrowanie i wyświetlanie tabeli
-st.subheader(f"Tabela Premier League w sezonie {season_filter_matches}")
+st.subheader(f"Tabela Serie A w sezonie {season_filter_matches}")
 st.caption(f"Stan na: {date_standings}")
 date_standings = pd.to_datetime(date_standings)
 
@@ -172,7 +172,7 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
         st.markdown('<div class="custom-button">', unsafe_allow_html=True)
         st.button(
             "Pokaż statystyki",
-            key=f"button_{i}",
+            key=f"button_SA{i}",
             on_click=showStats,
             args=(i,),
         )
@@ -282,10 +282,10 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
         # st.markdown(data, unsafe_allow_html=True)
         if st.button(
             "Pokaż więcej statystyk",
-            key=f"show_stats_button_{i}",
+            key=f"show_stats_buttonSA_{i}",
             args=(i,),
         ):
-            st.session_state["stats_id"] = df_filtered.iloc[i]
+            st.session_state["stats_idSA"] = df_filtered.iloc[i]
             st.switch_page("pagesHid/Statystyki Premier League.py")
 
 st.write(st.session_state)
