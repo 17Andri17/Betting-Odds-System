@@ -5,31 +5,6 @@ import runpy
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
-def navbar():
-    cols = st.columns(6)
-    with cols[0]:
-        if st.button(
-            "Strona Główna",
-            key=f"HomePL"
-        ):
-            st.switch_page("Kursomat.py")
-    with cols[1]:
-        if st.button(
-            "Premier League",
-            key=f"PremierLeaguePL"
-        ):
-            st.switch_page("pagesVis/Premier League.py")
-    with cols[2]:
-        st.write("Serie A")
-    with cols[3]:
-        st.write("Ligue1")
-    with cols[4]:
-        st.write("Bundesliga")
-    with cols[5]:
-        st.write("Ligue 1")
-
-navbar()
-
 # Ustawianie wszystkich filtrów na początkowe wartości
 def setFilters():
     st.session_state['PLteam_filter'] = []

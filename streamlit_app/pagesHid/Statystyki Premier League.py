@@ -393,16 +393,12 @@ team_name_mapping = {
     'Cardiff': 'Cardiff City'
 }
 
-odds['HomeTeam'] = odds['HomeTeam'].map(team_name_mapping)
-odds['AwayTeam'] = odds['AwayTeam'].map(team_name_mapping)
+odds['home_team'] = odds['home_team'].map(team_name_mapping)
+odds['away_team'] = odds['away_team'].map(team_name_mapping)
 
 odds['Date'] = pd.to_datetime(odds['Date'], format='%d/%m/%Y')
 matches['date'] = pd.to_datetime(matches['date'])
-odds = odds[["Date", "HomeTeam", "AwayTeam", "B365H", "B365D", "B365A"]]
-odds.rename(columns={
-    'HomeTeam': 'home_team',
-    'AwayTeam': 'away_team'
-}, inplace=True)
+odds = odds[["Date", "home_team", "away_team", "B365H", "B365D", "B365A"]]
 
 merged_df = pd.merge(
     matches,
@@ -417,15 +413,15 @@ merged_df["B365probsD"] = 1 / merged_df["B365D"] / (1 / merged_df["B365H"] + 1 /
 merged_df["B365probsA"] = 1 / merged_df["B365A"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
 
 
-date = st.session_state['stats_id']["date"]
-home_team = st.session_state['stats_id']["home_team"]
-away_team = st.session_state['stats_id']["away_team"]
+date = st.session_state['PLstats_id']["date"]
+home_team = st.session_state['PLstats_id']["home_team"]
+away_team = st.session_state['PLstats_id']["away_team"]
 
-home_goals = st.session_state['stats_id']["home_goals"]
-away_goals = st.session_state['stats_id']["away_goals"]
+home_goals = st.session_state['PLstats_id']["home_goals"]
+away_goals = st.session_state['PLstats_id']["away_goals"]
 
-formation_home = st.session_state['stats_id']["formation_home"]
-formation_away = st.session_state['stats_id']["formation_away"]
+formation_home = st.session_state['PLstats_id']["formation_home"]
+formation_away = st.session_state['PLstats_id']["formation_away"]
 
 
 st.markdown(f"""

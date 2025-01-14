@@ -48,7 +48,7 @@ premier_league_stats = st.Page(
 
 pg = st.navigation(pages = [homepage, premier_league, bundesliga, seriea, ligue1, laliga, premier_league_stats], position="hidden")
 
-st.sidebar.title("Navigation")
+st.sidebar.title("Wybierz stronę:")
 
 if st.sidebar.button(
             "Strona Główna",

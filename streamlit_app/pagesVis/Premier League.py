@@ -5,30 +5,6 @@ import runpy
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
-def navbar():
-    cols = st.columns(6)
-    with cols[0]:
-        if st.button(
-            "Strona Główna",
-            key=f"HomePL"
-        ):
-            st.switch_page("Kursomat.py")
-    with cols[1]:
-        if st.button(
-            "Premier League",
-            key=f"PremierLeaguePL"
-        ):
-            st.switch_page("pagesVis/Premier League.py")
-    with cols[2]:
-        st.write("Serie A")
-    with cols[3]:
-        st.write("Ligue1")
-    with cols[4]:
-        st.write("Bundesliga")
-    with cols[5]:
-        st.write("Ligue 1")
-
-navbar()
 
 # Ustawianie wszystkich filtrów na początkowe wartości
 def setFilters():
@@ -38,19 +14,19 @@ def setFilters():
 # Chowanie statystyk po zmianie filtrów
 def restartStats():
     for i in range (number_of_matches):
-        if f"show_row_{i}" in st.session_state:
-            st.session_state[f"show_row_{i}"] = False
+        if f"PLshow_row_{i}" in st.session_state:
+            st.session_state[f"PLshow_row_{i}"] = False
 
 # Pokazywanie statystyk dla i-tego meczu
 def showStats(i):
-    st.session_state[f"show_row_{i}"] = not st.session_state.get(f"show_row_{i}", False)
+    st.session_state[f"PLshow_row_{i}"] = not st.session_state.get(f"PLshow_row_{i}", False)
 
 # chyba do usunięcia
 def showDateButton():
     if len(season_filter_matches) == 0:
-        st.session_state["show_table"] = True
+        st.session_state["show_tablePL"] = True
     else:
-        st.session_state["show_table"] = False
+        st.session_state["show_tablePL"] = False
     restartStats()
 
 
@@ -100,11 +76,11 @@ with col2:
     st.table(table)
 
 # Filtry dla meczów
-filtr3, filtr4 = st.columns(2)
+filtr1, filtr2 = st.columns(2)
 
-with filtr3:
+with filtr1:
     team_filter = st.multiselect("Wybierz drużynę", options = sorted(df_filtered['home_team'].unique()), on_change=restartStats)
-with filtr4:
+with filtr2:
     number_of_matches = st.slider("Wybierz liczbę wyświetlanych meczów", min_value=10, max_value=100, step=5, on_change=restartStats)
 
 team_filter2=team_filter
@@ -179,7 +155,7 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
         st.markdown('</div>', unsafe_allow_html=True)
 
     # Wyświetlanie dodatkowych informacji pod wierszem, jeśli jest włączone
-    if st.session_state.get(f"show_row_{i}", False):
+    if st.session_state.get(f"PLshow_row_{i}", False):
         row = df_filtered.iloc[i]
         st.markdown(f"""
                 <div style="text-align: center; font-size: 15px;
@@ -282,10 +258,10 @@ for i in range(min(number_of_matches, df_filtered['home_team'].count())):
         # st.markdown(data, unsafe_allow_html=True)
         if st.button(
             "Pokaż więcej statystyk",
-            key=f"show_stats_button_{i}",
+            key=f"PLshow_stats_button_{i}",
             args=(i,),
         ):
-            st.session_state["stats_id"] = df_filtered.iloc[i]
+            st.session_state["PLstats_id"] = df_filtered.iloc[i]
             st.switch_page("pagesHid/Statystyki Premier League.py")
 
 st.write(st.session_state)
