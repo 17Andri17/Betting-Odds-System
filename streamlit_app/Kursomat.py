@@ -12,6 +12,9 @@ def loadData():
     df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
     df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
     df["formation_away"] = df["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
+    df["round"] = df["round"].astype(int)
+    df["home_goals"] = df["home_goals"].astype(int)
+    df["away_goals"] = df["away_goals"].astype(int)
     dfPL = df[df["league"] == "pl"]
     dfLL = df[df["league"] == "ll"]
     dfL1 = df[df["league"] == "l1"]
@@ -31,6 +34,9 @@ def loadData():
 
     standings = pd.read_csv("../standings.csv")
     standings['date']=pd.to_datetime(standings['date'])
+    standings['goal_difference'] = standings['goal_difference'].astype(int)
+    standings['goals'] = standings['goals'].astype(int) 
+    standings['goals_conceded'] = standings['goals_conceded'].astype(int)
     standingsPL = standings[standings["league"] == "pl"]
     standingsLL = standings[standings["league"] == "ll"]
     standingsL1 = standings[standings["league"] == "l1"]

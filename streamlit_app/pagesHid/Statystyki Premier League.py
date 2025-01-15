@@ -810,3 +810,5 @@ with col2:
     st.pyplot(fig22)
     with st.spinner("Generowanie składów"):
         squads(players, date, home_team, away_team, formation_home, formation_away)
+
+st.write(st.session_state)
