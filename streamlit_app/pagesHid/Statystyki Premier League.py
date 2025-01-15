@@ -555,13 +555,14 @@ match_probabilities = get_probabilities(all_features)
 
 
 st.markdown(f"""
-                <p style='text-align: center; font-size: 40px;'>{home_team}  {home_goals} - {away_goals}  {away_team}</p>
+                <p style='text-align: center; font-size: 40px;'>{home_team}  {int(home_goals)} - {int(away_goals)}  {away_team}</p>
                 """, unsafe_allow_html=True)
 
 
 categories = ['Home Win', 'Draw', 'Away Win']
-probabilities2 = [match_probabilities["home_win"], match_probabilities["draw"], match_probabilities["away_win"]]
+probabilities2 = [round(match_probabilities["home_win"], 2), round(match_probabilities["draw"], 2), 1 - round(match_probabilities["home_win"], 2) - round(match_probabilities["draw"], 2)]
 probabilities = [merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsH"], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsD"], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsA"]]
+probabilities = [round(probabilities[0], 2), round(probabilities[1], 2), 1 - round(probabilities[0], 2) - round(probabilities[1], 2)]
 colors = ['green', 'gray', 'blue']
 
 fig21, ax = plt.subplots(figsize=(6, 1))
@@ -572,6 +573,7 @@ for prob, color in zip(probabilities2, colors):
     start += prob
 
 start = 0
+sumi = 0
 for prob, color in zip(probabilities2, colors):
     ax.text(start + prob / 2, 0, f"{int(prob * 100)}%", color='black', va='center', ha='center', fontsize=10)
     start += prob
@@ -630,7 +632,7 @@ with col2:
         <div style="display: flex; justify-content: center; margin-bottom: 5px;">
             <div style="width: 120px;">{home_matches.iloc[j]['date'].date()} {home_matches.iloc[j]['time']}</div>
             <div style="width: 200px;">{home_matches.iloc[j]['home_team']}</div>
-            <div style="width: 100px;">{home_matches.iloc[j]['home_goals']} - {home_matches.iloc[j]['away_goals']}</div>
+            <div style="width: 100px;">{int(home_matches.iloc[j]['home_goals'])} - {int(home_matches.iloc[j]['away_goals'])}</div>
             <div style="width: 200px;">{home_matches.iloc[j]['away_team']}</div>
         """
         if home_matches.iloc[j]['home_team'] == home_team:
@@ -670,7 +672,7 @@ with col3:
         <div style="display: flex; justify-content: center; margin-bottom: 5px;">
             <div style="width: 120px;">{away_matches.iloc[j]['date'].date()} {away_matches.iloc[j]['time']}</div>
             <div style="width: 200px;">{away_matches.iloc[j]['home_team']}</div>
-            <div style="width: 100px;">{away_matches.iloc[j]['home_goals']} - {away_matches.iloc[j]['away_goals']}</div>
+            <div style="width: 100px;">{int(away_matches.iloc[j]['home_goals'])} - {int(away_matches.iloc[j]['away_goals'])}</div>
             <div style="width: 200px;">{away_matches.iloc[j]['away_team']}</div>
         """
         if away_matches.iloc[j]['home_team'] == home_team:
@@ -753,7 +755,7 @@ with col3:
 
     # Add value labels on top of bars
     for bar in bars:
-        height = bar.get_height()
+        height = int(bar.get_height())
         if height == 0:
             plt.text(bar.get_x() + bar.get_width() / 2, height, str(height),
                 ha="center", va="bottom", fontsize=20)
@@ -797,7 +799,7 @@ with col3:
         data += f"""
             <div style="width: 120px;">{h2h.iloc[j]['date']} {h2h.iloc[j]['time']}</div>
             <div style="width: 200px;">{h2h.iloc[j]['home_team']}</div>
-            <div style="width: 100px;">{h2h.iloc[j]['home_goals']} - {h2h.iloc[j]['away_goals']}</div>
+            <div style="width: 100px;">{int(h2h.iloc[j]['home_goals'])} - {int(h2h.iloc[j]['away_goals'])}</div>
             <div style="width: 200px;">{h2h.iloc[j]['away_team']}</div>
         </div>
         """
