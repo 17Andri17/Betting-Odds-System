@@ -6,6 +6,16 @@ import random
 from mplsoccer import Pitch
 import matplotlib.pyplot as plt
 
+import torch
+import torch.nn as nn
+import json
+import torch.nn.functional as F
+import joblib
+from models import FootballMatchPredictor, FootballMatchPredictorOutcome
+
+import math
+from scipy.optimize import minimize_scalar
+
 
 def navbar():
     cols = st.columns(6)
@@ -317,7 +327,7 @@ def squads(players, date, home_team, away_team, formation_home, formation_away):
     formation_4_x = [6, 21, 32, 43, 54]
 
     formation_3_y = [0, 18, 18, 12]
-    formation_4_y = [0, 18, 18, 18, 12]
+    formation_4_y = [0, 16, 18, 18, 12]
 
 
     if len(structure_home) == 4:
@@ -333,6 +343,7 @@ def squads(players, date, home_team, away_team, formation_home, formation_away):
         for j in range(len(arr)):
             ax.scatter(formation_x[i], y_start + y_shift_length*j, c=color1, s=size, edgecolors='black', label='Team A')
             ax.text(formation_x[i], y_start + y_shift_length*j + 5.5, arr[j].split()[-1], horizontalalignment='center', fontsize = 13)
+
 
     if len(structure_away) == 4:
         formation_x = formation_3_x
@@ -353,14 +364,124 @@ def squads(players, date, home_team, away_team, formation_home, formation_away):
     plt.show()
     st.write(fig)
 
+def poisson_cdf(lmbda, k):
+    return sum((lmbda ** i) * math.exp(-lmbda) / math.factorial(i) for i in range(k + 1))
+
+def solve_lambda(p_over, line):
+    def objective(lmbda):
+        p_leq = poisson_cdf(lmbda, line)
+        return abs(1 - p_leq - p_over)
+
+    result = minimize_scalar(objective, bounds=(0, 10), method='bounded')
+    return result.x
+
+def poisson_probability(lmbda, line, over=True):
+    if over:
+        return 1 - poisson_cdf(lmbda, math.floor(line))
+    else:
+        return poisson_cdf(lmbda, math.floor(line))
+
+def exact_score_probability(home_lambda, away_lambda, home_goals, away_goals):
+    p_home = (home_lambda ** home_goals) * math.exp(-home_lambda) / math.factorial(home_goals)
+    p_away = (away_lambda ** away_goals) * math.exp(-away_lambda) / math.factorial(away_goals)
+    return p_home * p_away
+
+def get_probabilities(all_fetures):
+    all_features_scaled = scaler.transform([all_features])
+    input_features = all_features_scaled[:, [filtered_matches.columns.get_loc(col) for col in selected_features]]
+
+    all_features_scaled_home = scaler_home.transform([all_features])
+    input_features_home = all_features_scaled_home[:, [filtered_matches.columns.get_loc(col) for col in selected_features_home]]
+
+    all_features_scaled_away = scaler_home.transform([all_features])
+    input_features_away = all_features_scaled_away[:, [filtered_matches.columns.get_loc(col) for col in selected_features_away]]
+
+    all_features_scaled_outcome = scaler_outcome.transform([all_features])
+    input_features_outcome = all_features_scaled_outcome[:, [filtered_matches.columns.get_loc(col) for col in selected_features_outcome]]
+
+    probabilities = {}
+
+    probabilities["under25"], probabilities["over25"] = predict_goals(input_features, model)
+    probabilities["home_under15"], probabilities["home_over15"] = predict_goals(input_features_home, model_home)
+    probabilities["away_under15"], probabilities["away_over15"] = predict_goals(input_features_away, model_away)
+    probabilities["draw"], probabilities["home_win"], probabilities["away_win"] = predict_outcome(input_features_outcome, model_outcome)
+    probabilities["lambda_goals"] = solve_lambda(probabilities["over25"], 2)
+    probabilities["lambda_home_goals"] = solve_lambda(probabilities["home_over15"], 1)
+    probabilities["lambda_away_goals"] = solve_lambda(probabilities["away_over15"], 1)
+    probabilities["under15"] = poisson_probability(probabilities["lambda_goals"], 1.5, over=False)
+    probabilities["over15"] = poisson_probability(probabilities["lambda_goals"], 1.5, over=True)
+    probabilities["under35"] = poisson_probability(probabilities["lambda_goals"], 3.5, over=False)
+    probabilities["over35"] = poisson_probability(probabilities["lambda_goals"], 3.5, over=True)
+    probabilities["home_under05"] = poisson_probability(probabilities["lambda_home_goals"], 0.5, over=False)
+    probabilities["home_over05"] = poisson_probability(probabilities["lambda_home_goals"], 0.5, over=True)
+    probabilities["away_under05"] = poisson_probability(probabilities["lambda_away_goals"], 0.5, over=False)
+    probabilities["away_over05"] = poisson_probability(probabilities["lambda_away_goals"], 0.5, over=True)
+    probabilities["exact_11"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 1, 1)
+    probabilities["exact_00"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 0, 0)
+    probabilities["exact_22"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 2, 2)
+    probabilities["exact_10"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 1, 0)
+    probabilities["exact_20"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 2, 0)
+    probabilities["exact_21"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 2, 1)
+    probabilities["exact_01"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 0, 1)
+    probabilities["exact_02"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 0, 2)
+    probabilities["exact_12"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 1, 2)
+    
+    return probabilities
+
+def load_model(model_path):
+    model = torch.load(model_path, map_location=torch.device('cpu'))
+    model.eval()
+    return model
+
+def load_scaler(scaler_path):
+    scaler = joblib.load(scaler_path)
+    return scaler
+
+def load_selected_fetures(selected_features_path):
+    with open(selected_features_path, "r", encoding="utf-8") as f:
+        selected_features = json.load(f)
+    return selected_features
+
+def predict_goals(input_features, model):
+    with torch.no_grad():
+        input_tensor = torch.tensor(input_features, dtype=torch.float32)
+        prediction = model(input_tensor)
+        return prediction.squeeze()[0].item(), prediction.squeeze()[1].item()
+    
+def predict_outcome(input_features, model):
+    with torch.no_grad():
+        input_tensor = torch.tensor(input_features, dtype=torch.float32)
+        prediction = model(input_tensor)
+        return prediction.squeeze()[0].item(), prediction.squeeze()[1].item(), prediction.squeeze()[2].item()
+
+
 def load_data():
     players = st.session_state["playersPL"].copy()
     matches = st.session_state["dfPL"].copy()
     odds = st.session_state["oddsPL"].copy()
     return players, matches, odds
 
+
+
 players, matches, odds = load_data()
 matches2 = matches.copy()
+
+# Load models
+scaler = load_scaler("../models/goals_scaler_v1.pkl")
+selected_features = load_selected_fetures("../models/goals_features_v1.json")
+model = load_model("../models/goals_predictor_v1.pth")
+
+scaler_home = load_scaler("../models/goals_scaler_home_goals_v1.pkl")
+selected_features_home = load_selected_fetures("../models/home_goals_features_v1.json")
+model_home = load_model("../models/goals_home_predictor_v1.pth")
+
+scaler_away = load_scaler("../models/goals_scaler_away_goals_v1.pkl")
+selected_features_away = load_selected_fetures("../models/away_goals_features_v1.json")
+model_away = load_model("../models/goals_away_predictor_v1.pth")
+
+scaler_outcome = load_scaler("../models/outcome_scaler.pkl")
+selected_features_outcome = load_selected_fetures("../models/outcome_features.json")
+model_outcome = load_model("../models/football_match_predictor_v1.pth")
 
 team_name_mapping = {
     'Burnley': 'Burnley',
@@ -423,6 +544,15 @@ away_goals = st.session_state['PLstats_id']["away_goals"]
 formation_home = st.session_state['PLstats_id']["formation_home"]
 formation_away = st.session_state['PLstats_id']["formation_away"]
 
+filtered_matches = matches[(matches["date"] == date) & (matches["home_team"] == home_team)]
+
+filtered_matches = filtered_matches[[col for col in matches.columns if 'last5' in col or 'matches_since' in col or 'overall' in col or 'tiredness' in col or 'h2h' in col]]
+filtered_matches = filtered_matches.drop(columns = ["home_last5_possession", "away_last5_possession"])
+filtered_matches = filtered_matches[~filtered_matches.isna().any(axis=1)]
+all_features = filtered_matches.iloc[0]
+
+match_probabilities = get_probabilities(all_features)
+
 
 st.markdown(f"""
                 <p style='text-align: center; font-size: 40px;'>{home_team}  {home_goals} - {away_goals}  {away_team}</p>
@@ -430,10 +560,29 @@ st.markdown(f"""
 
 
 categories = ['Home Win', 'Draw', 'Away Win']
+probabilities2 = [match_probabilities["home_win"], match_probabilities["draw"], match_probabilities["away_win"]]
 probabilities = [merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsH"], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsD"], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsA"]]
 colors = ['green', 'gray', 'blue']
 
-fig2, ax = plt.subplots(figsize=(6, 1))
+fig21, ax = plt.subplots(figsize=(6, 1))
+start = 0
+
+for prob, color in zip(probabilities2, colors):
+    ax.barh(0, prob, left=start, color=color, edgecolor='none', height=0.5)
+    start += prob
+
+start = 0
+for prob, color in zip(probabilities2, colors):
+    ax.text(start + prob / 2, 0, f"{int(prob * 100)}%", color='black', va='center', ha='center', fontsize=10)
+    start += prob
+
+ax.set_xlim(0, 1)
+ax.axis('off')  # Turn off the axis
+plt.title('Prawdopodbieństwo zdarzeń modelu', pad=10)
+plt.show()
+plt.tight_layout()
+
+fig22, ax = plt.subplots(figsize=(6, 1))
 start = 0
 
 for prob, color in zip(probabilities, colors):
@@ -447,7 +596,7 @@ for prob, color in zip(probabilities, colors):
 
 ax.set_xlim(0, 1)
 ax.axis('off')  # Turn off the axis
-plt.title('Prawdopodbieństwo zdarzeń', pad=10)
+plt.title('Prawdopodbieństwo zdarzeń bukmacherów', pad=10)
 plt.show()
 plt.tight_layout()
 
@@ -554,7 +703,7 @@ with col3:
     with filtr1:
         team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
     with filtr2:
-        stat_filter = st.selectbox("Wybierz statystykę", options=["goals", "corner_kicks"], key="stat_filter")
+        stat_filter = st.selectbox("Wybierz statystykę", options=["Bramki w meczu", "Strzelone bramki", "Stracone bramki"], key="stat_filter")
 
     def select_last_matches(df, team, date, n, where="all"):
         if where == "home":
@@ -566,17 +715,31 @@ with col3:
         team_matches_sorted = team_matches.sort_values(by="date", ascending=False)
         return team_matches_sorted.head(n)
 
-    def get_stat(df, team, stat):
+    def get_stat(df, team, stat, other_team = False, sum = False):
         df[stat] = df.apply(lambda x: x["home_" + stat] if x["home_team"] == team else x["away_" + stat], axis=1)
+        if other_team:
+            df[stat] = df.apply(lambda x: x["away_" + stat] if x["home_team"] == team else x["home_" + stat], axis=1)
+        if sum:
+            df[stat] = df.apply(lambda x: x["home_" + stat] + x["away_" + stat], axis=1)
         df["new_date"] = df["date"].apply(lambda x: str(x)[5:7]+"."+str(x)[8:10])
         return df[[stat, "new_date"]]
 
     team = team_filter
-    stat = stat_filter
+    stat_name = stat_filter
     n = 10
     last_matches = select_last_matches(matches, team, date, n)
-    stat_df = get_stat(last_matches, team, stat)
-    threshold = 1.5
+    if stat_name == "Strzelone bramki":
+        stat = "goals"
+        stat_df = get_stat(last_matches, team, stat)
+        threshold = 1.5
+    if stat_name == "Stracone bramki":
+        stat = "goals"
+        stat_df = get_stat(last_matches, team, stat, True)
+        threshold = 1.5
+    if stat_name == "Bramki w meczu":
+        stat = "goals"
+        stat_df = get_stat(last_matches, team, stat, sum = True)
+        threshold = 2.5
 
     # Set colors: green if above threshold, red otherwise
     colors = ["green" if val > threshold else "red" for val in stat_df[stat]]
@@ -599,7 +762,7 @@ with col3:
                 ha="center", va="bottom", fontsize=20)
 
     # Chart styling
-    plt.title(stat.capitalize() + " dla " + team + " w ostatnich " + str(n) + " meczach")
+    plt.title(stat_name.capitalize() + " " + team + " w ostatnich " + str(n) + " meczach")
     plt.xlabel("Mecze")
     plt.ylabel(stat)
     plt.legend()
@@ -641,6 +804,7 @@ with col3:
     data += "</div>"
     st.markdown(data, unsafe_allow_html=True)
 with col2:
-    st.pyplot(fig2)
+    st.pyplot(fig21)
+    st.pyplot(fig22)
     with st.spinner("Generowanie składów"):
         squads(players, date, home_team, away_team, formation_home, formation_away)
