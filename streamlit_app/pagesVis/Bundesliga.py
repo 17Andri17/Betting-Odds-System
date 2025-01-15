@@ -78,7 +78,7 @@ else:
 
 
     # Tytuł i tworzenie filtrów
-    st.title("Premier League")
+    st.title("Bundesliga")
     # Filtry dla tabeli
     col1, col2 = st.columns(2)
     with col1:
@@ -104,7 +104,7 @@ else:
         standings_filtered = standings_filtered[standings_filtered["date"] == possible_date]
 
     # Filtrowanie i wyświetlanie tabeli
-    st.subheader(f"Tabela Premier League w sezonie {season_filter_matches}")
+    st.subheader(f"Tabela Bundesligi w sezonie {season_filter_matches}")
     st.caption(f"Stan na: {date_standings}")
     date_standings = pd.to_datetime(date_standings)
 
