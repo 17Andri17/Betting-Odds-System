@@ -15,6 +15,7 @@ from models import FootballMatchPredictor, FootballMatchPredictorOutcome
 
 import math
 from scipy.optimize import minimize_scalar
+from IPython.core.display import HTML
 
 
 def navbar():
@@ -425,6 +426,23 @@ def get_probabilities(all_fetures):
     probabilities["exact_01"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 0, 1)
     probabilities["exact_02"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 0, 2)
     probabilities["exact_12"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 1, 2)
+
+    probabilities["exact_33"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 3, 3)
+    probabilities["exact_30"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 3, 0)
+    probabilities["exact_31"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 3, 1)
+    probabilities["exact_32"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 3, 2)
+    probabilities["exact_03"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 0, 3)
+    probabilities["exact_13"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 1, 3)
+    probabilities["exact_23"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 2, 3)
+    probabilities["exact_40"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 4, 0)
+    probabilities["exact_41"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 4, 1)
+    probabilities["exact_42"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 4, 2)
+    probabilities["exact_43"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 4, 3)
+    probabilities["exact_44"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 4, 4)
+    probabilities["exact_34"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 3, 4)
+    probabilities["exact_24"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 2, 4)
+    probabilities["exact_14"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 1, 4)
+    probabilities["exact_04"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 0, 4)
     
     return probabilities
 
@@ -461,6 +479,8 @@ def load_data():
     odds = st.session_state["oddsPL"].copy()
     return players, matches, odds
 
+def getCourse(prob):
+    return round(1 / prob, 2)
 
 
 players, matches, odds = load_data()
@@ -811,4 +831,72 @@ with col2:
     with st.spinner("Generowanie składów"):
         squads(players, date, home_team, away_team, formation_home, formation_away)
 
-st.write(st.session_state)
+# Dane do tabeli
+wyniki = [
+    ["1:0", getCourse(match_probabilities["exact_10"])], ["2:0", getCourse(match_probabilities["exact_20"])], ["2:1", getCourse(match_probabilities["exact_21"])],
+    ["3:0", getCourse(match_probabilities["exact_30"])], ["3:1", getCourse(match_probabilities["exact_31"])], ["3:2", getCourse(match_probabilities["exact_32"])],
+    ["0:1", getCourse(match_probabilities["exact_01"])], ["0:2", getCourse(match_probabilities["exact_02"])], ["1:2", getCourse(match_probabilities["exact_12"])],
+    ["0:3", getCourse(match_probabilities["exact_03"])], ["1:3", getCourse(match_probabilities["exact_13"])], ["2:3", getCourse(match_probabilities["exact_23"])],
+    ["0:0", getCourse(match_probabilities["exact_00"])], ["1:1", getCourse(match_probabilities["exact_11"])], ["2:2", getCourse(match_probabilities["exact_22"])], 
+    ["3:3", getCourse(match_probabilities["exact_33"])], ["4:0", getCourse(match_probabilities["exact_40"])], ["0:4", getCourse(match_probabilities["exact_04"])],
+    ["4:1", getCourse(match_probabilities["exact_41"])], ["4:2", getCourse(match_probabilities["exact_42"])], ["4:3", getCourse(match_probabilities["exact_43"])],
+    ["3:4", getCourse(match_probabilities["exact_34"])], ["2:4", getCourse(match_probabilities["exact_24"])], ["1:4", getCourse(match_probabilities["exact_14"])],
+]
+
+# Konwersja danych do macierzy
+rows, cols = 4, 3  # Liczba wierszy i kolumn
+# table_data = [wyniki[i:i + cols] for i in range(0, len(wyniki), cols)]
+table_data = [wyniki[i:i + cols] for i in range(0, len(wyniki), cols)]
+
+# Tworzenie HTML
+html_content = """
+<style>
+    .table-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px; /* Odstęp między komórkami */
+        max-width: 800px;
+        margin: 20px auto;
+    }
+    .cell {
+        width: 120px;
+        height: 60px;
+        background-color: #333333;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 15px;
+        color: white;
+        font-family: Arial, sans-serif;
+    }
+    .result {
+        font-size: 12px;
+        text-align: left;
+    }
+    .odds {
+        font-size: 16px;
+        font-weight: bold;
+        text-align: right;
+    }
+</style>
+<div class="table-container">
+"""
+
+for row in table_data:
+    for cell in row:
+        wynik, kurs = cell
+        html_content += f"""
+        <div class="cell">
+            <span class="result">{wynik}</span>
+            <span class="odds">{kurs:.2f}</span>
+        </div>
+        """
+
+html_content += "</div>"
+
+col1, col2 = st.columns(2)
+# Wyświetlenie tabeli w Streamlit
+with col1:
+    st.components.v1.html(html_content, height=800)
