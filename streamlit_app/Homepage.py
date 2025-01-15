@@ -58,22 +58,16 @@ if st.sidebar.button(
             st.switch_page("Kursomat.py")
 
 if st.sidebar.button(
-            "Premier League",
-            key=f"PremierLeague"
-        ):
-            st.switch_page("pagesVis/Premier League.py")
-
-if st.sidebar.button(
             "Bundesliga",
             key=f"Bundesliga"
         ):
             st.switch_page("pagesVis/Bundesliga.py")
 
 if st.sidebar.button(
-            "Serie A",
-            key=f"SerieA"
+            "La Liga",
+            key=f"La Liga"
         ):
-            st.switch_page("pagesVis/Serie A.py")
+            st.switch_page("pagesVis/La Liga.py")
 
 if st.sidebar.button(
             "Ligue 1",
@@ -82,9 +76,15 @@ if st.sidebar.button(
             st.switch_page("pagesVis/Ligue 1.py")
 
 if st.sidebar.button(
-            "La Liga",
-            key=f"La Liga"
+            "Premier League",
+            key=f"PremierLeague"
         ):
-            st.switch_page("pagesVis/La Liga.py")
+            st.switch_page("pagesVis/Premier League.py")
+
+if st.sidebar.button(
+            "Serie A",
+            key=f"SerieA"
+        ):
+            st.switch_page("pagesVis/Serie A.py")
 
 pg.run()

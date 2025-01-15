@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+from PIL import Image
 
 @st.cache_data
 def loadData():
@@ -73,8 +74,64 @@ if "dfPL" not in st.session_state:
     #st.session_state["playersPL"] = players
     st.session_state["oddsSA"] = oddsSA
 
-if st.button(
-            "Premier League",
-            key=f"premierLeagueTenTego"
-        ):
-            st.switch_page("pagesVis/Premier League.py")
+st.title("Witaj użytkowniku!")
+st.write("""Witaj na stronie, na której możesz sprawdzić kursy na mecze
+    piłkarskie z różnych lig europejskich, a także przeprowadzić analizę spotkań różnych drużyn.""")
+
+st.subheader("Wybierz ligę, dla której chcesz zobaczyć statystyki:")
+
+
+# Define local image paths and text content
+columns_data = [
+    {"image_path": "graphics/Germany.png", "text": "Bundesliga", "button_label": "Przejdź do strony"},
+    {"image_path": "graphics/Spain.png", "text": "La Liga", "button_label": "Przejdź do strony"},
+    {"image_path": "graphics/France.png", "text": "Ligue 1", "button_label": "Przejdź do strony"},
+    {"image_path": "graphics/England.png", "text": "Premier League", "button_label": "Przejdź do strony"},
+    {"image_path": "graphics/Italy.png", "text": "Serie A", "button_label": "Przejdź do strony"}
+]
+
+# Create 5 columns
+cols = st.columns(5)
+
+# Populate each column with content
+for i, col in enumerate(cols):
+    with col:
+        try:
+            image = Image.open(columns_data[i]['image_path'])
+            st.image(image.resize((1280,854)), use_container_width=True)
+
+        except FileNotFoundError:
+            col.error(f"Nie znaleziono obrazu: {columns_data[i]['image_path']}")
+
+cols = st.columns(5)
+for i, col in enumerate(cols):
+    with col:
+        if st.button(
+                f"{columns_data[i]['text']}",
+                key=f"HomeButton{i}"
+            ):
+                st.switch_page(f"pagesVis/{columns_data[i]['text']}.py")
+
+st.write("""
+Zakłady bukmacherskie to forma rozrywki, która cieszy się dużą popularnością na całym świecie. 
+Jednak, podobnie jak każda inna forma hazardu, wiąże się z ryzykiem. Ważne jest, aby zdawać sobie sprawę, że **zakłady bukmacherskie są przeznaczone wyłącznie dla osób pełnoletnich**, które są świadome konsekwencji swojej decyzji.
+""")
+
+st.write("""
+Gry bukmacherskie mogą być ekscytujące, ale niosą ze sobą także niebezpieczeństwo uzależnienia. 
+Wiele osób, które zaczynają od okazjonalnej zabawy, z czasem stają się zależne od tej formy rozrywki, co może prowadzić do poważnych problemów finansowych, emocjonalnych, a także rodzinnych.
+
+Dlatego pamiętaj, żeby:
+- Grać odpowiedzialnie i nie przekraczać swoich możliwości finansowych,
+- Ustalić limity czasowe oraz finansowe i nie łamać ich,
+- Zawsze traktować zakłady bukmacherskie jako formę zabawy, a nie sposób na zarobek,
+- Szukać pomocy, jeśli zauważysz, że hazard staje się problemem w Twoim życiu.
+""")
+
+st.write("""
+Uzależnienie od hazardu to poważna choroba, która może dotknąć każdego. Jeśli czujesz, że hazard wpływa na Twoje życie w negatywny sposób, nie wahaj się szukać pomocy. Są organizacje i specjaliści, którzy oferują wsparcie osobom borykającym się z tym problemem.
+
+**Pamiętaj!** Hazard to tylko zabawa, ale tylko wtedy, gdy kontrolujesz, co robisz. Graj z głową i nigdy nie pozwól, by zabawa stała się problemem.
+""")
+
+st.write("W przypadku problemów z uzależnieniem, skontaktuj się z lokalnymi organizacjami wsparcia.")
