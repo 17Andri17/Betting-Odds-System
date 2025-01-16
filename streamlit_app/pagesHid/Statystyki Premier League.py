@@ -365,6 +365,44 @@ def squads(players, date, home_team, away_team, formation_home, formation_away):
     plt.show()
     st.write(fig)
 
+@st.cache_data
+def statsGraph(home_stats, away_stats, categories):
+    total_stats = np.array(home_stats) + np.array(away_stats)
+    home_ratios = np.array(home_stats) / total_stats
+    away_ratios = np.array(away_stats) / total_stats
+
+    fig, ax = plt.subplots(figsize=(8, len(categories) * 0.52))
+    ax.set_facecolor("#1A1A1A") 
+
+    for j, (category, home_ratio, away_ratio) in enumerate(zip(categories, home_ratios, away_ratios)):
+        y_position = len(categories) - j  # Pozycja w osi Y (odwracamy kolejność)
+        home_color = "#003366"
+        away_color = "#003366"
+        if home_ratio > away_ratio:
+            home_color = "#CC0033"
+        elif home_ratio < away_ratio:
+            away_color = "#CC0033"
+
+        ax.text(0, y_position + 0.4, category, ha="center", va="center", fontsize=10, color="black", weight="bold")
+                
+        ax.barh(
+            y_position, -home_ratio, height=0.18, color=home_color, align="center", 
+            zorder=3, edgecolor="black", linewidth=1.5
+        )
+        ax.barh(
+            y_position, away_ratio, height=0.18, color=away_color, align="center", 
+            zorder=3, edgecolor="black", linewidth=1.5
+        )
+        ax.text(-home_ratio - 0.02, y_position, f"{home_stats[j]}", ha="right", va="center", fontsize=10, color="black")
+        ax.text(away_ratio + 0.02, y_position, f"{away_stats[j]}", ha="left", va="center", fontsize=10, color="black")
+
+    ax.set_xlim(-1, 1)  # Oś X od -1 do 1 (po równo na obie strony)
+    ax.set_ylim(0.5, len(categories) + 0.5)  # Oś Y dla odpowiedniego rozmieszczenia
+    ax.axis("off")  # Usunięcie osi, ponieważ nie są potrzebne
+
+    plt.tight_layout()
+    st.pyplot(plt)
+
 def poisson_cdf(lmbda, k):
     return sum((lmbda ** i) * math.exp(-lmbda) / math.factorial(i) for i in range(k + 1))
 
@@ -474,16 +512,23 @@ def predict_outcome(input_features, model):
 
 
 def load_data():
-    players = st.session_state["playersPL"].copy()
-    matches = st.session_state["dfPL"].copy()
-    odds = st.session_state["oddsPL"].copy()
-    return players, matches, odds
+    # players = st.session_state["playersPL"].copy()
+    # matches = st.session_state["dfPL"].copy()
+    # odds = st.session_state["oddsPL"].copy()
+    odds = pd.read_csv("../odds.csv")
+    players = pd.read_csv("../players_pl.csv")
+    matches = pd.read_csv("../prepared_data.csv")
+    players = players.rename(columns={"position": "position_x"})
+    home_team = st.query_params["home_team"]
+    date = st.query_params["date"]
+    return players, matches, odds, home_team, date
 
 def getCourse(prob):
     return round(1 / prob, 2)
 
 
-players, matches, odds = load_data()
+players, matches, odds, home_team, date = load_data()
+curr_match = matches[(matches["date"] == date) & (matches["home_team"] == home_team)].iloc[0]
 matches2 = matches.copy()
 
 # Load models
@@ -554,15 +599,21 @@ merged_df["B365probsD"] = 1 / merged_df["B365D"] / (1 / merged_df["B365H"] + 1 /
 merged_df["B365probsA"] = 1 / merged_df["B365A"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
 
 
-date = st.session_state['PLstats_id']["date"]
-home_team = st.session_state['PLstats_id']["home_team"]
-away_team = st.session_state['PLstats_id']["away_team"]
+# date = st.session_state['PLstats_id']["date"]
+# home_team = st.session_state['PLstats_id']["home_team"]
+# away_team = st.session_state['PLstats_id']["away_team"]
 
-home_goals = st.session_state['PLstats_id']["home_goals"]
-away_goals = st.session_state['PLstats_id']["away_goals"]
+# home_goals = st.session_state['PLstats_id']["home_goals"]
+# away_goals = st.session_state['PLstats_id']["away_goals"]
 
-formation_home = st.session_state['PLstats_id']["formation_home"]
-formation_away = st.session_state['PLstats_id']["formation_away"]
+# formation_home = st.session_state['PLstats_id']["formation_home"]
+# formation_away = st.session_state['PLstats_id']["formation_away"]
+
+away_team = curr_match["away_team"]
+home_goals = curr_match["home_goals"]
+away_goals = curr_match["away_goals"]
+formation_home = curr_match["formation_home"]
+formation_away = curr_match["formation_away"]
 
 filtered_matches = matches[(matches["date"] == date) & (matches["home_team"] == home_team)]
 
@@ -621,6 +672,31 @@ ax.axis('off')  # Turn off the axis
 plt.title('Prawdopodbieństwo zdarzeń bukmacherów', pad=10)
 plt.show()
 plt.tight_layout()
+
+categories = ["Posiadanie piłki", "Strzały", "Strzały na bramkę", "Rzuty wolne", "Rzuty rózne",
+                "Spalone", "Faule", "Żółte kartki", "Czerwone kartki", "Podania", "Celne podania"]
+            # trzeba będzie dodać Ball Possession jako pierwsze
+home_stats = ["54", curr_match["home_shots"],
+                curr_match["home_shots_on_target"], curr_match["home_fouled"],
+                curr_match["home_corner_kicks"], curr_match["home_offsides"], curr_match["home_fouls"],
+                curr_match["home_cards_yellow"], curr_match["home_cards_red"],
+                curr_match["home_passes"], curr_match["home_passes_completed"]]
+away_stats = ["46", curr_match["away_shots"],
+                curr_match["away_shots_on_target"], curr_match["away_fouled"],
+                curr_match["away_corner_kicks"], curr_match["away_offsides"], curr_match["away_fouls"],
+                curr_match["away_cards_yellow"], curr_match["away_cards_red"],
+                curr_match["away_passes"], curr_match["away_passes_completed"]]
+home_stats = [int(v) for v in home_stats]
+away_stats = [int(v) for v in away_stats]
+
+
+col1, col2 = st.columns([4,4])
+with col1:
+    with st.spinner("Generowanie składów"):
+        squads(players, date, home_team, away_team, formation_home, formation_away)
+with col2:
+    statsGraph(home_stats, away_stats, categories)
+    
 
 col2, col3 = st.columns(2)
 
@@ -828,8 +904,8 @@ with col3:
 with col2:
     st.pyplot(fig21)
     st.pyplot(fig22)
-    with st.spinner("Generowanie składów"):
-        squads(players, date, home_team, away_team, formation_home, formation_away)
+    # with st.spinner("Generowanie składów"):
+    #     squads(players, date, home_team, away_team, formation_home, formation_away)
 
 # Dane do tabeli
 wyniki = [

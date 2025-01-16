@@ -15,19 +15,19 @@ def loadData():
     df["round"] = df["round"].astype(int)
     df["home_goals"] = df["home_goals"].astype(int)
     df["away_goals"] = df["away_goals"].astype(int)
-    df = df.sort_values("round")
     dfPL = df[df["league"] == "pl"]
     dfLL = df[df["league"] == "ll"]
     dfL1 = df[df["league"] == "l1"]
     dfBun = df[df["league"] == "bl"]
     dfSA = df[df["league"] == "sa"]
 
-    players_pl = pd.read_csv("../players_pl.csv")
-    players_bl = pd.read_csv("../players_bl.csv")
-    players_ll = pd.read_csv("../players_ll.csv")
-    players_l1 = pd.read_csv("../players_l1.csv")
-    players_sa = pd.read_csv("../players_sa.csv")
-    players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa], ignore_index=True)
+    players_23_24 = pd.read_csv("../fbref/data/players_pl_23-24_fbref.csv")
+    players_22_23 = pd.read_csv("../fbref/data/players_pl_22-23_fbref.csv")
+    players_21_22 = pd.read_csv("../fbref/data/players_pl_21-22_fbref.csv")
+    players_20_21 = pd.read_csv("../fbref/data/players_pl_20-21_fbref.csv")
+    players_19_20 = pd.read_csv("../fbref/data/players_pl_19-20_fbref.csv")
+    players_18_19 = pd.read_csv("../fbref/data/players_pl_18-19_fbref.csv")
+    players = pd.concat([players_23_24, players_22_23, players_21_22, players_20_21, players_19_20, players_18_19], ignore_index=True)
     players = players.rename(columns={"position": "position_x"})
     players["date"] = pd.to_datetime(players["date"], errors="coerce")  # Najpierw konwersja do datetime
     players["date"] = players["date"].astype(str)
