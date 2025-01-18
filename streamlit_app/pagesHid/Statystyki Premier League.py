@@ -371,30 +371,40 @@ def statsGraph(home_stats, away_stats, categories):
     home_ratios = np.array(home_stats) / total_stats
     away_ratios = np.array(away_stats) / total_stats
 
-    fig, ax = plt.subplots(figsize=(8, len(categories) * 0.52))
+    fig, ax = plt.subplots(figsize=(8, len(categories) * 0.62))
     ax.set_facecolor("#1A1A1A") 
 
     for j, (category, home_ratio, away_ratio) in enumerate(zip(categories, home_ratios, away_ratios)):
         y_position = len(categories) - j  # Pozycja w osi Y (odwracamy kolejność)
-        home_color = "#003366"
-        away_color = "#003366"
+        home_color = "#001e28"
+        away_color = "#001e28"
         if home_ratio > away_ratio:
-            home_color = "#CC0033"
+            home_color = "#ff0046"
         elif home_ratio < away_ratio:
-            away_color = "#CC0033"
+            away_color = "#ff0046"
 
-        ax.text(0, y_position + 0.4, category, ha="center", va="center", fontsize=10, color="black", weight="bold")
+        ax.text(0, y_position + 0.4, category, ha="center", va="center", fontsize=12, color="#001e28", weight="bold")
+
+        ax.barh(
+            y_position, 0.993, left=0.007, height=0.18, color="#eee", align="center", 
+            zorder=3, linewidth=1.5
+        )
+
+        ax.barh(
+            y_position, -0.993, left=-0.007, height=0.18, color="#eee", align="center", 
+            zorder=3, linewidth=1.5
+        )
                 
         ax.barh(
-            y_position, -home_ratio, height=0.18, color=home_color, align="center", 
-            zorder=3, edgecolor="black", linewidth=1.5
+            y_position, min(-home_ratio+0.007, 0), left=-0.007, height=0.18, color=home_color, align="center", 
+            zorder=3, linewidth=1.5
         )
         ax.barh(
-            y_position, away_ratio, height=0.18, color=away_color, align="center", 
-            zorder=3, edgecolor="black", linewidth=1.5
+            y_position, max(away_ratio-0.007, 0), height=0.18, left=0.007, color=away_color, align="center", 
+            zorder=3, linewidth=1.5
         )
-        ax.text(-home_ratio - 0.02, y_position, f"{home_stats[j]}", ha="right", va="center", fontsize=10, color="black")
-        ax.text(away_ratio + 0.02, y_position, f"{away_stats[j]}", ha="left", va="center", fontsize=10, color="black")
+        ax.text(-0.999, y_position + 0.4, f"{home_stats[j]}", ha="left", va="center", fontsize=11, color="#001e28", weight="bold")
+        ax.text(0.999, y_position + 0.4, f"{away_stats[j]}", ha="right", va="center", fontsize=11, color="#001e28", weight="bold")
 
     ax.set_xlim(-1, 1)  # Oś X od -1 do 1 (po równo na obie strony)
     ax.set_ylim(0.5, len(categories) + 0.5)  # Oś Y dla odpowiedniego rozmieszczenia
