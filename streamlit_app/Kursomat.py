@@ -3,84 +3,84 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
-@st.cache_data
-def loadData():
-    df = pd.read_csv("../final_prepared_data_with_new.csv")
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
-    df["date"] = df["date"].astype(str)
-    df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
-    df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
-    df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
-    df["formation_away"] = df["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
-    df["round"] = df["round"].astype(int)
-    df["home_goals"] = df["home_goals"].astype(int)
-    df["away_goals"] = df["away_goals"].astype(int)
-    df = df.sort_values("round")
-    dfPL = df[df["league"] == "pl"]
-    dfLL = df[df["league"] == "ll"]
-    dfL1 = df[df["league"] == "l1"]
-    dfBun = df[df["league"] == "bl"]
-    dfSA = df[df["league"] == "sa"]
+# @st.cache_data
+# def loadData():
+#     df = pd.read_csv("../final_prepared_data_with_new.csv")
+#     df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
+#     df["date"] = df["date"].astype(str)
+#     df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
+#     df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
+#     df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
+#     df["formation_away"] = df["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
+#     df["round"] = df["round"].astype(int)
+#     df["home_goals"] = df["home_goals"].astype(int)
+#     df["away_goals"] = df["away_goals"].astype(int)
+#     df = df.sort_values("round")
+#     dfPL = df[df["league"] == "pl"]
+#     dfLL = df[df["league"] == "ll"]
+#     dfL1 = df[df["league"] == "l1"]
+#     dfBun = df[df["league"] == "bl"]
+#     dfSA = df[df["league"] == "sa"]
 
-    players_pl = pd.read_csv("../players_pl.csv")
-    players_bl = pd.read_csv("../players_bl.csv")
-    players_ll = pd.read_csv("../players_ll.csv")
-    players_l1 = pd.read_csv("../players_l1.csv")
-    players_sa = pd.read_csv("../players_sa.csv")
-    players_new = pd.read_csv("../new_players.csv")
+#     players_pl = pd.read_csv("../players_pl.csv")
+#     players_bl = pd.read_csv("../players_bl.csv")
+#     players_ll = pd.read_csv("../players_ll.csv")
+#     players_l1 = pd.read_csv("../players_l1.csv")
+#     players_sa = pd.read_csv("../players_sa.csv")
+#     players_new = pd.read_csv("../new_players.csv")
     
-    players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa, players_new], ignore_index=True)
-    players = players.rename(columns={"position": "position_x"})
-    players["date"] = pd.to_datetime(players["date"], errors="coerce")  # Najpierw konwersja do datetime
-    players["date"] = players["date"].astype(str)
+#     players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa, players_new], ignore_index=True)
+#     players = players.rename(columns={"position": "position_x"})
+#     players["date"] = pd.to_datetime(players["date"], errors="coerce")  # Najpierw konwersja do datetime
+#     players["date"] = players["date"].astype(str)
 
-    standings = pd.read_csv("../standings_with_new.csv")
-    standings['date']=pd.to_datetime(standings['date'])
-    standings['goal_difference'] = standings['goal_difference'].astype(int)
-    standings['goals'] = standings['goals'].astype(int) 
-    standings['goals_conceded'] = standings['goals_conceded'].astype(int)
-    standingsPL = standings[standings["league"] == "pl"]
-    standingsLL = standings[standings["league"] == "ll"]
-    standingsL1 = standings[standings["league"] == "l1"]
-    standingsBun = standings[standings["league"] == "bl"]
-    standingsSA = standings[standings["league"] == "sa"]
+#     standings = pd.read_csv("../standings_with_new.csv")
+#     standings['date']=pd.to_datetime(standings['date'])
+#     standings['goal_difference'] = standings['goal_difference'].astype(int)
+#     standings['goals'] = standings['goals'].astype(int) 
+#     standings['goals_conceded'] = standings['goals_conceded'].astype(int)
+#     standingsPL = standings[standings["league"] == "pl"]
+#     standingsLL = standings[standings["league"] == "ll"]
+#     standingsL1 = standings[standings["league"] == "l1"]
+#     standingsBun = standings[standings["league"] == "bl"]
+#     standingsSA = standings[standings["league"] == "sa"]
 
-    odds = pd.read_csv("../odds.csv")
-    oddsPL = odds[odds["Div"] == "E0"]
-    oddsLL = odds[odds["Div"] == "SP1"]
-    oddsL1 = odds[odds["Div"] == "F1"]
-    oddsBun = odds[odds["Div"] == "D1"]
-    oddsSA = odds[odds["Div"] == "I1"]
+#     odds = pd.read_csv("../odds.csv")
+#     oddsPL = odds[odds["Div"] == "E0"]
+#     oddsLL = odds[odds["Div"] == "SP1"]
+#     oddsL1 = odds[odds["Div"] == "F1"]
+#     oddsBun = odds[odds["Div"] == "D1"]
+#     oddsSA = odds[odds["Div"] == "I1"]
 
-    return dfPL, dfLL, dfL1, dfBun, dfSA, standingsPL, standingsLL, standingsL1, standingsBun, standingsSA, players, oddsPL, oddsLL, oddsL1, oddsBun, oddsSA
+#     return dfPL, dfLL, dfL1, dfBun, dfSA, standingsPL, standingsLL, standingsL1, standingsBun, standingsSA, players, oddsPL, oddsLL, oddsL1, oddsBun, oddsSA
 
-# Sprawdzenie, czy dane są już w session_state
-if "dfPL" not in st.session_state:
-    dfPL, dfLL, dfL1, dfBun, dfSA, standingsPL, standingsLL, standingsL1, standingsBun, standingsSA, players, oddsPL, oddsLL, oddsL1, oddsBun, oddsSA = loadData()
-    st.session_state["dfPL"] = dfPL
-    st.session_state["standingsPL"] = standingsPL
-    st.session_state["playersPL"] = players
-    st.session_state["oddsPL"] = oddsPL
+# # Sprawdzenie, czy dane są już w session_state
+# if "dfPL" not in st.session_state:
+#     dfPL, dfLL, dfL1, dfBun, dfSA, standingsPL, standingsLL, standingsL1, standingsBun, standingsSA, players, oddsPL, oddsLL, oddsL1, oddsBun, oddsSA = loadData()
+#     st.session_state["dfPL"] = dfPL
+#     st.session_state["standingsPL"] = standingsPL
+#     st.session_state["playersPL"] = players
+#     st.session_state["oddsPL"] = oddsPL
 
-    st.session_state["dfLL"] = dfLL
-    st.session_state["standingsLL"] = standingsLL
-    #st.session_state["playersPL"] = players
-    st.session_state["oddsLL"] = oddsPL
+#     st.session_state["dfLL"] = dfLL
+#     st.session_state["standingsLL"] = standingsLL
+#     #st.session_state["playersPL"] = players
+#     st.session_state["oddsLL"] = oddsPL
 
-    st.session_state["dfL1"] = dfL1
-    st.session_state["standingsL1"] = standingsL1
-    #st.session_state["playersPL"] = players
-    st.session_state["oddsL1"] = oddsL1
+#     st.session_state["dfL1"] = dfL1
+#     st.session_state["standingsL1"] = standingsL1
+#     #st.session_state["playersPL"] = players
+#     st.session_state["oddsL1"] = oddsL1
 
-    st.session_state["dfBun"] = dfBun
-    st.session_state["standingsBun"] = standingsBun
-    #st.session_state["playersPL"] = players
-    st.session_state["oddsBun"] = oddsBun
+#     st.session_state["dfBun"] = dfBun
+#     st.session_state["standingsBun"] = standingsBun
+#     #st.session_state["playersPL"] = players
+#     st.session_state["oddsBun"] = oddsBun
 
-    st.session_state["dfSA"] = dfSA
-    st.session_state["standingsSA"] = standingsSA
-    #st.session_state["playersPL"] = players
-    st.session_state["oddsSA"] = oddsSA
+#     st.session_state["dfSA"] = dfSA
+#     st.session_state["standingsSA"] = standingsSA
+#     #st.session_state["playersPL"] = players
+#     st.session_state["oddsSA"] = oddsSA
 
 st.title("Witaj użytkowniku!")
 st.write("""Witaj na stronie, na której możesz sprawdzić kursy na mecze
