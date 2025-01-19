@@ -339,9 +339,8 @@ else:
             matches_html = ""
             for _, row in df[df["round"] == roundi].iterrows():
                 filtered_matches = df[(df["date"] == row["date"]) & (df["home_team"] == row["home_team"])]
-                filtered_matches = filtered_matches[[col for col in df.columns if 'last5' in col or 'matches_since' in col or 'overall' in col or 'tiredness' in col or 'h2h' in col]]
+                filtered_matches = filtered_matches[[col for col in df.columns if 'last5' in col or 'matches_since' in col or 'overall' in col or 'tiredness' in col]]
                 filtered_matches = filtered_matches.drop(columns = ["home_last5_possession", "away_last5_possession"])
-                filtered_matches = filtered_matches[~filtered_matches.isna().any(axis=1)]
                 all_features = filtered_matches.iloc[0]
                 all_features_scaled_outcome = scaler_outcome.transform([all_features])
                 input_features_outcome = all_features_scaled_outcome[:, [filtered_matches.columns.get_loc(col) for col in selected_features_outcome]]

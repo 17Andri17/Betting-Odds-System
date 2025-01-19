@@ -45,7 +45,7 @@ navbar()
 
 @st.cache_data
 def create_team_structure(idx, formation, starting_eleven):
-    
+    print(starting_eleven)
     formation_parts = list(map(int, formation.split('-')))
     used_players = set()
     starting_eleven["main_pos"] = starting_eleven["position_x"].apply(lambda x: x.split(",")[0])
@@ -403,8 +403,12 @@ def statsGraph(home_stats, away_stats, categories):
             y_position, max(away_ratio-0.007, 0), height=0.18, left=0.007, color=away_color, align="center", 
             zorder=3, linewidth=1.5
         )
-        ax.text(-0.999, y_position + 0.4, f"{home_stats[j]}", ha="left", va="center", fontsize=11, color="#001e28", weight="bold")
-        ax.text(0.999, y_position + 0.4, f"{away_stats[j]}", ha="right", va="center", fontsize=11, color="#001e28", weight="bold")
+        if j==0:
+            ax.text(-0.999, y_position + 0.4, f"{home_stats[j]}%", ha="left", va="center", fontsize=11, color="#001e28", weight="bold")
+            ax.text(0.999, y_position + 0.4, f"{away_stats[j]}%", ha="right", va="center", fontsize=11, color="#001e28", weight="bold")
+        else:
+            ax.text(-0.999, y_position + 0.4, f"{home_stats[j]}", ha="left", va="center", fontsize=11, color="#001e28", weight="bold")
+            ax.text(0.999, y_position + 0.4, f"{away_stats[j]}", ha="right", va="center", fontsize=11, color="#001e28", weight="bold")
 
     ax.set_xlim(-1, 1)  # Oś X od -1 do 1 (po równo na obie strony)
     ax.set_ylim(0.5, len(categories) + 0.5)  # Oś Y dla odpowiedniego rozmieszczenia
@@ -527,10 +531,14 @@ def load_data():
     # odds = st.session_state["oddsPL"].copy()
     odds = pd.read_csv("../odds.csv")
     players = pd.read_csv("../players_pl.csv")
-    matches = pd.read_csv("../prepared_data.csv")
+    players_new = pd.read_csv("../new_players.csv")
+    players = pd.concat([players, players_new], ignore_index=True)
+    players["date"] = pd.to_datetime(players["date"])
+    matches = pd.read_csv("../final_prepared_data_with_new.csv")
+    matches["date"] = pd.to_datetime(matches["date"])
     players = players.rename(columns={"position": "position_x"})
     home_team = st.query_params["home_team"]
-    date = st.query_params["date"]
+    date = pd.to_datetime(st.query_params["date"])
     return players, matches, odds, home_team, date
 
 def getCourse(prob):
@@ -609,6 +617,7 @@ merged_df["B365probsD"] = 1 / merged_df["B365D"] / (1 / merged_df["B365H"] + 1 /
 merged_df["B365probsA"] = 1 / merged_df["B365A"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
 
 
+
 # date = st.session_state['PLstats_id']["date"]
 # home_team = st.session_state['PLstats_id']["home_team"]
 # away_team = st.session_state['PLstats_id']["away_team"]
@@ -627,7 +636,7 @@ formation_away = curr_match["formation_away"]
 
 filtered_matches = matches[(matches["date"] == date) & (matches["home_team"] == home_team)]
 
-filtered_matches = filtered_matches[[col for col in matches.columns if 'last5' in col or 'matches_since' in col or 'overall' in col or 'tiredness' in col or 'h2h' in col]]
+filtered_matches = filtered_matches[[col for col in matches.columns if 'last5' in col or 'matches_since' in col or 'overall' in col or 'tiredness' in col]]
 filtered_matches = filtered_matches.drop(columns = ["home_last5_possession", "away_last5_possession"])
 filtered_matches = filtered_matches[~filtered_matches.isna().any(axis=1)]
 all_features = filtered_matches.iloc[0]
@@ -642,8 +651,12 @@ st.markdown(f"""
 
 categories = ['Home Win', 'Draw', 'Away Win']
 probabilities2 = [round(match_probabilities["home_win"], 2), round(match_probabilities["draw"], 2), 1 - round(match_probabilities["home_win"], 2) - round(match_probabilities["draw"], 2)]
-probabilities = [merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsH"], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsD"], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsA"]]
-probabilities = [round(probabilities[0], 2), round(probabilities[1], 2), 1 - round(probabilities[0], 2) - round(probabilities[1], 2)]
+
+if len(merged_df[(merged_df["date"] == date) & (merged_df["home_team"] == home_team)]) > 0:
+    probabilities = [merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsH"].iloc[0], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsD"].iloc[0], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsA"].iloc[0]]
+    probabilities = [round(probabilities[0], 2), round(probabilities[1], 2), 1 - round(probabilities[0], 2) - round(probabilities[1], 2)]
+else:
+    probabilities = []
 colors = ['green', 'gray', 'blue']
 
 fig21, ax = plt.subplots(figsize=(6, 1))
@@ -665,33 +678,34 @@ plt.title('Prawdopodbieństwo zdarzeń modelu', pad=10)
 plt.show()
 plt.tight_layout()
 
-fig22, ax = plt.subplots(figsize=(6, 1))
-start = 0
+if len(probabilities) > 0:
+    fig22, ax = plt.subplots(figsize=(6, 1))
+    start = 0
 
-for prob, color in zip(probabilities, colors):
-    ax.barh(0, prob, left=start, color=color, edgecolor='none', height=0.5)
-    start += prob
+    for prob, color in zip(probabilities, colors):
+        ax.barh(0, prob, left=start, color=color, edgecolor='none', height=0.5)
+        start += prob
 
-start = 0
-for prob, color in zip(probabilities, colors):
-    ax.text(start + prob / 2, 0, f"{int(prob * 100)}%", color='black', va='center', ha='center', fontsize=10)
-    start += prob
+    start = 0
+    for prob, color in zip(probabilities, colors):
+        ax.text(start + prob / 2, 0, f"{int(prob * 100)}%", color='black', va='center', ha='center', fontsize=10)
+        start += prob
 
-ax.set_xlim(0, 1)
-ax.axis('off')  # Turn off the axis
-plt.title('Prawdopodbieństwo zdarzeń bukmacherów', pad=10)
-plt.show()
-plt.tight_layout()
+    ax.set_xlim(0, 1)
+    ax.axis('off')  # Turn off the axis
+    plt.title('Prawdopodbieństwo zdarzeń bukmacherów', pad=10)
+    plt.show()
+    plt.tight_layout()
 
-categories = ["Posiadanie piłki", "Strzały", "Strzały na bramkę", "Rzuty wolne", "Rzuty rózne",
+categories = ["Posiadanie piłki", "Strzały", "Strzały na bramkę", "Rzuty wolne", "Rzuty rożne",
                 "Spalone", "Faule", "Żółte kartki", "Czerwone kartki", "Podania", "Celne podania"]
-            # trzeba będzie dodać Ball Possession jako pierwsze
-home_stats = ["54", curr_match["home_shots"],
+
+home_stats = [int(100*curr_match["home_possession"]), curr_match["home_shots"],
                 curr_match["home_shots_on_target"], curr_match["home_fouled"],
                 curr_match["home_corner_kicks"], curr_match["home_offsides"], curr_match["home_fouls"],
                 curr_match["home_cards_yellow"], curr_match["home_cards_red"],
                 curr_match["home_passes"], curr_match["home_passes_completed"]]
-away_stats = ["46", curr_match["away_shots"],
+away_stats = [int(100*curr_match["away_possession"]), curr_match["away_shots"],
                 curr_match["away_shots_on_target"], curr_match["away_fouled"],
                 curr_match["away_corner_kicks"], curr_match["away_offsides"], curr_match["away_fouls"],
                 curr_match["away_cards_yellow"], curr_match["away_cards_red"],
@@ -913,7 +927,8 @@ with col3:
     st.markdown(data, unsafe_allow_html=True)
 with col2:
     st.pyplot(fig21)
-    st.pyplot(fig22)
+    if (len(probabilities)>0):
+        st.pyplot(fig22)
     # with st.spinner("Generowanie składów"):
     #     squads(players, date, home_team, away_team, formation_home, formation_away)
 

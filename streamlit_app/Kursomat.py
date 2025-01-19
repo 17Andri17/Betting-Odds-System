@@ -5,7 +5,7 @@ from PIL import Image
 
 @st.cache_data
 def loadData():
-    df = pd.read_csv("../prepared_data.csv")
+    df = pd.read_csv("../final_prepared_data_with_new.csv")
     df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
     df["date"] = df["date"].astype(str)
     df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
@@ -27,12 +27,14 @@ def loadData():
     players_ll = pd.read_csv("../players_ll.csv")
     players_l1 = pd.read_csv("../players_l1.csv")
     players_sa = pd.read_csv("../players_sa.csv")
-    players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa], ignore_index=True)
+    players_new = pd.read_csv("../new_players.csv")
+    
+    players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa, players_new], ignore_index=True)
     players = players.rename(columns={"position": "position_x"})
     players["date"] = pd.to_datetime(players["date"], errors="coerce")  # Najpierw konwersja do datetime
     players["date"] = players["date"].astype(str)
 
-    standings = pd.read_csv("../standings.csv")
+    standings = pd.read_csv("../standings_with_new.csv")
     standings['date']=pd.to_datetime(standings['date'])
     standings['goal_difference'] = standings['goal_difference'].astype(int)
     standings['goals'] = standings['goals'].astype(int) 
