@@ -12,9 +12,10 @@ import torch.nn as nn
 
 # Chowanie statystyk po zmianie filtrów
 def restartStats():
-    for i in range (st.session_state["L1number_of_matches"]):
-        if f"L1show_row_{i}" in st.session_state:
-            st.session_state[f"L1show_row_{i}"] = False
+    # for i in range (st.session_state["L1number_of_matches"]):
+    #     if f"L1show_row_{i}" in st.session_state:
+    #         st.session_state[f"L1show_row_{i}"] = False
+    pass
 
 # Pokazywanie statystyk dla i-tego meczu
 def showStats(i):

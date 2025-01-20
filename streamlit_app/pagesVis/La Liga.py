@@ -12,9 +12,10 @@ import torch.nn as nn
 
 # Chowanie statystyk po zmianie filtrów
 def restartStats():
-    for i in range (st.session_state["LLnumber_of_matches"]):
-        if f"LLshow_row_{i}" in st.session_state:
-            st.session_state[f"LLshow_row_{i}"] = False
+    # for i in range (st.session_state["LLnumber_of_matches"]):
+    #     if f"LLshow_row_{i}" in st.session_state:
+    #         st.session_state[f"LLshow_row_{i}"] = False
+    pass
 
 # Pokazywanie statystyk dla i-tego meczu
 def showStats(i):
@@ -303,7 +304,7 @@ def generate_html_match_list(df):
     html_template += """<div class="container">"""
 
     match_template = """
-    <a href="/Statystyki_Ligue_1?home_team={home_team}&date={original_date}" target=_self>
+    <a href="/Statystyki_La_Liga?home_team={home_team}&date={original_date}" target=_self>
     <div class="match">
         <div class="time-date">{date}  {time}</div>
         <div class="teams">
