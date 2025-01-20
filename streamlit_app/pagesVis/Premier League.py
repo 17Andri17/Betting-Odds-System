@@ -383,7 +383,7 @@ def generate_html_match_list(df):
 
 @st.cache_data
 def loadData():
-    df = pd.read_csv("../final_prepared_data_with_new.csv")
+    df = pd.read_csv("../final_prepared_data_with_weather_new.csv")
     df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
     df["date"] = df["date"].astype(str)
     df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)

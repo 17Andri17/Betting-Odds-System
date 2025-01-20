@@ -533,7 +533,7 @@ def load_data():
     players_new = pd.read_csv("../new_players.csv")
     players = pd.concat([players, players_new], ignore_index=True)
     players["date"] = pd.to_datetime(players["date"])
-    matches = pd.read_csv("../final_prepared_data_with_new.csv")
+    matches = pd.read_csv("../final_prepared_data_with_weather_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
     players = players.rename(columns={"position": "position_x"})
     home_team = st.query_params["home_team"]
@@ -664,7 +664,7 @@ if len(merged_df[(merged_df["date"] == date) & (merged_df["home_team"] == home_t
     probabilities = [round(probabilities[0], 2), round(probabilities[1], 2), 1 - round(probabilities[0], 2) - round(probabilities[1], 2)]
 else:
     probabilities = []
-colors = ['green', 'gray', 'blue']
+colors = ['lightgreen', 'lightgray', 'lightblue']
 
 fig21, ax = plt.subplots(figsize=(6, 1))
 start = 0
@@ -925,12 +925,70 @@ with tab5:
         """
     data += "</div>"
     st.markdown(data, unsafe_allow_html=True)
+
 with tab1:
-    col1, col2, col3 = st.columns([1,2,1])
+    col1, col2, col3 = st.columns([1,1,1])
+    with(col1):
+        st.write(f"### Informacje:")
+        st.write(f"##### Data: {curr_match['date'].strftime('%Y-%m-%d')} {curr_match['time']}")
+        st.write(f"### ")
+
     with(col2):
+        st.write(f"### ")
+        st.write(f"##### Stadion: {curr_match['Stadium']}")
+        st.write(f"### ")
+    with(col3):
+        st.write(f"### ")
+        st.write(f"##### Sędzia: {curr_match['referee']}")
+        st.write(f"### ")
+
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+    temperature=curr_match["weather_temperature"]
+    precipitation=curr_match["weather_precipitation"]
+    wind=curr_match["weather_wind"]
+    humidity=curr_match["weather_humidity"]
+    cloud_cover=curr_match["weather_cloud_cover"]
+    with(col1):
+        if curr_match["weather_cloud_cover"] < 30 and curr_match["weather_precipitation"] < 1:
+            icon = "☀️"
+        elif curr_match["weather_cloud_cover"] < 60 and curr_match["weather_precipitation"] < 1:
+            icon = "🌥️"
+        elif curr_match["weather_precipitation"] > 1:
+            icon = "🌧️" 
+        else:
+            icon = "☁️"
+        st.write(f"### Pogoda:")
+        st.write(f"##### Temperatura: {temperature}°C")
+        st.write(f"### ")
+    with(col2):
+        st.write(f"### {icon}")
+        st.write(f"##### Opady: {precipitation}mm")
+        st.write(f"### ")
+    with(col3):
+        st.write(f"### ")
+        st.write(f"##### Wiatr: {wind}km/h")
+        st.write(f"### ")
+    with(col4):
+        st.write(f"### ")
+        st.write(f"##### Wilgotność: {humidity}%")
+        st.write(f"### ")
+    with(col5): 
+        st.write(f"### ")
+        st.write(f"##### Zachmurzenie: {cloud_cover}%")
+        st.write(f"### ")
+
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with(col1):
+        st.write(f"### Przewidywania:")
+    with(col2):
+        st.write(f"### ")
         st.pyplot(fig21)
         if (len(probabilities)>0):
             st.pyplot(fig22)
+    
+
+
+
 
 # Dane do tabeli
 wyniki = [
