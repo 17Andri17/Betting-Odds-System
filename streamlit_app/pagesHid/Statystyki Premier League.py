@@ -829,6 +829,47 @@ with tab5:
 
     with col3:        
         st.markdown(last_away, unsafe_allow_html=True)
+    
+    home_stats = curr_match[["home_last5_passes_pct", "home_last5_take_ons_won_pct", "home_last5_aerials_won_pct",
+                            "home_last5_take_ons_tackled_pct", "home_last5_challenge_tackles_pct"]].values.flatten().tolist()
+
+    away_stats = curr_match[["away_last5_passes_pct", "away_last5_take_ons_won_pct", "away_last5_aerials_won_pct",
+                            "away_last5_take_ons_tackled_pct", "away_last5_challenge_tackles_pct"]].values.flatten().tolist()
+
+    home_stats += home_stats[:1]
+    away_stats += away_stats[:1]
+
+    cats = ["Celne podania %", "Wygrane dryblingi %", "Wygrane pojedynki w powietrzu %", "Zatrzymane dryblingi %", "Udane przechwyty %"]
+
+    angles = [n / float(5) * 2 * math.pi for n in range(5)]
+    angles += angles[:1]
+
+    fig4, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+
+    ax.plot(angles, home_stats, linewidth=2, linestyle='solid', label=curr_match["home_team"], color='b')
+    ax.fill(angles, home_stats, 'b', alpha=0.2)
+
+    ax.plot(angles, away_stats, linewidth=2, linestyle='solid', label=curr_match["away_team"], color='r')
+    ax.fill(angles, away_stats, 'r', alpha=0.2)
+
+    ax.set_theta_offset(math.pi / 2) 
+
+    plt.xticks(angles[:-1], cats, color='black', size=10)
+
+    plt.yticks([20, 40, 60, 80, 100], ["20", "40", "60", "80", "100"], color="grey", size=8)
+    plt.ylim(0, 110)
+
+    # Legenda
+    plt.legend(loc='lower right', bbox_to_anchor=(0.2, 0.2))
+
+    # Tytuł
+    plt.title('Porównanie wybranych statystyk z ostatnich 5 meczów', size=15, pad=10)
+    
+    # Show the graph in the Streamlit app
+    col1, col2, col3=st.columns([2, 3, 2])
+    with col2:
+        st.pyplot(fig4)
+
         
 
     
@@ -927,59 +968,119 @@ with tab5:
     st.markdown(data, unsafe_allow_html=True)
 
 with tab1:
-    col1, col2, col3 = st.columns([1,1,1])
-    with(col1):
-        st.write(f"### Informacje:")
-        st.write(f"##### Data: {curr_match['date'].strftime('%Y-%m-%d')} {curr_match['time']}")
-        st.write(f"### ")
+    info_style = f"""
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); text-align: center;">
+        <div style="grid-column: span 4; text-align: center; font-size: 35px; font-weight: bold; padding-bottom: 15px; padding-top: 15px">
+            Informacje o meczu:
+        </div>
+        <div>
+            <div style="font-size: 25px; font-weight: bold;">Data:</div>
+            <div style="font-size: 25px;">{curr_match['date'].strftime('%Y-%m-%d')} {curr_match['time']}</div>
+        </div>
+        <div>
+            <div style="font-size: 25px; font-weight: bold;">Stadion:</div>
+            <div style="font-size: 25px;">{curr_match['Stadium']}</div>
+        </div>
+        <div>
+            <div style="font-size: 25px; font-weight: bold;">Sędzia</div>
+            <div style="font-size: 25px;">{curr_match['referee']}</div>
+        </div>
+    </div>
+    """
+    st.markdown(info_style, unsafe_allow_html=True)
+    
+    # col1, col2, col3 = st.columns([1,1,1])
+    # with(col1):
+    #     st.write(f"### Informacje:")
+    #     st.write(f"##### Data: {curr_match['date'].strftime('%Y-%m-%d')} {curr_match['time']}")
+    #     st.write(f"### ")
 
-    with(col2):
-        st.write(f"### ")
-        st.write(f"##### Stadion: {curr_match['Stadium']}")
-        st.write(f"### ")
-    with(col3):
-        st.write(f"### ")
-        st.write(f"##### Sędzia: {curr_match['referee']}")
-        st.write(f"### ")
+    # with(col2):
+    #     st.write(f"### ")
+    #     st.write(f"##### Stadion: {curr_match['Stadium']}")
+    #     st.write(f"### ")
+    # with(col3):
+    #     st.write(f"### ")
+    #     st.write(f"##### Sędzia: {curr_match['referee']}")
+        # st.write(f"### ")
 
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+    col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1])
     temperature=curr_match["weather_temperature"]
     precipitation=curr_match["weather_precipitation"]
     wind=curr_match["weather_wind"]
     humidity=curr_match["weather_humidity"]
     cloud_cover=curr_match["weather_cloud_cover"]
-    with(col1):
-        if curr_match["weather_cloud_cover"] < 30 and curr_match["weather_precipitation"] < 1:
-            icon = "☀️"
-        elif curr_match["weather_cloud_cover"] < 60 and curr_match["weather_precipitation"] < 1:
-            icon = "🌥️"
-        elif curr_match["weather_precipitation"] > 1:
-            icon = "🌧️" 
-        else:
-            icon = "☁️"
-        st.write(f"### Pogoda:")
-        st.write(f"##### Temperatura: {temperature}°C")
-        st.write(f"### ")
-    with(col2):
-        st.write(f"### {icon}")
-        st.write(f"##### Opady: {precipitation}mm")
-        st.write(f"### ")
-    with(col3):
-        st.write(f"### ")
-        st.write(f"##### Wiatr: {wind}km/h")
-        st.write(f"### ")
-    with(col4):
-        st.write(f"### ")
-        st.write(f"##### Wilgotność: {humidity}%")
-        st.write(f"### ")
-    with(col5): 
-        st.write(f"### ")
-        st.write(f"##### Zachmurzenie: {cloud_cover}%")
-        st.write(f"### ")
+    if curr_match["weather_cloud_cover"] < 30 and curr_match["weather_precipitation"] < 1:
+        icon = "☀️"
+    elif curr_match["weather_cloud_cover"] < 60 and curr_match["weather_precipitation"] < 1:
+        icon = "🌥️"
+    elif curr_match["weather_precipitation"] > 1:
+        icon = "🌧️" 
+    else:
+        icon = "☁️"
+    weather_style = f"""
+    <div style="display: grid; grid-template-columns: repeat(6, 1fr); text-align: center;">
+        <div style="grid-column: span 6; text-align: center; font-size: 35px; font-weight: bold; padding-bottom: 15px; padding-top: 15px">
+            Pogoda:
+        </div>
+        <div>
+            <div style="font-size: 60px; ">{icon}</div>
+        </div>
+        <div>
+            <div style="font-size: 25px; font-weight: bold;">Temperatura:</div>
+            <div style="font-size: 25px;">{temperature}°C</div>
+        </div>
+        <div>
+            <div style="font-size: 25px; font-weight: bold;">Opady:</div>
+            <div style="font-size: 25px;">{precipitation}mm</div>
+        </div>
+        <div>
+            <div style="font-size: 25px; font-weight: bold;">Wiatr:</div>
+            <div style="font-size: 25px;">{wind}km/h</div>
+        </div>
+        <div>
+            <div style="font-size: 25px; font-weight: bold;">Wilgotność:</div>
+            <div style="font-size: 25px;">{humidity}%</div>
+        </div>
+        <div>
+            <div style="font-size: 25px; font-weight: bold;">Zachmurzenie:</div>
+            <div style="font-size: 25px;">{cloud_cover}%</div>
+        </div>
+    </div>
+    """
+    st.markdown(weather_style, unsafe_allow_html=True)
+
+    # with(col1):
+    #     st.write(f"### Pogoda:")
+    #     st.markdown(
+    #     f"""
+    #     <div style="text-align: center; font-size: 70px;">
+    #         {icon}
+    #     </div>
+    #     """,
+    #     unsafe_allow_html=True,
+    # )
+    # with(col2):
+    #     st.write(f"# ")
+    #     st.write(f"##### Temperatura: {temperature}°C")
+    # with(col3):
+    #     st.write(f"# ")
+    #     st.write(f"##### Opady: {precipitation}mm")
+    #     st.write(f"### ")
+    # with(col4):
+    #     st.write(f"# ")
+    #     st.write(f"##### Wiatr: {wind}km/h")
+    #     st.write(f"### ")
+    # with(col5):
+    #     st.write(f"# ")
+    #     st.write(f"##### Wilgotność: {humidity}%")
+    #     st.write(f"### ")
+    # with(col6): 
+    #     st.write(f"# ")
+    #     st.write(f"##### Zachmurzenie: {cloud_cover}%")
+    #     st.write(f"### ")
 
     col1, col2, col3 = st.columns([1, 3, 1])
-    with(col1):
-        st.write(f"### Przewidywania:")
     with(col2):
         st.write(f"### ")
         st.pyplot(fig21)
