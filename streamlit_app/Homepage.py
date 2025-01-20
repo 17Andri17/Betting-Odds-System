@@ -41,13 +41,44 @@ laliga = st.Page(
     title="La Liga",
     icon="⚽",
 )
+
 premier_league_stats = st.Page(
     "pagesHid/Statystyki Premier League.py",
     title="Statystyki Premier League",
     icon="📊",
 )
 
-pg = st.navigation(pages = [homepage, premier_league, bundesliga, seriea, ligue1, laliga, premier_league_stats], position="hidden")
+bundesliga_stats = st.Page(
+    "pagesHid/Statystyki Bundesliga.py",
+    title="Statystyki Bundesliga",
+    icon="📊",
+)
+
+serie_a_stats = st.Page(
+    "pagesHid/Statystyki Serie A.py",
+    title="Statystyki Serie A",
+    icon="📊",
+)
+
+la_liga_stats = st.Page(
+    "pagesHid/Statystyki La Liga.py",
+    title="Statystyki La Liga",
+    icon="📊",
+)
+
+ligue_1_stats = st.Page(
+    "pagesHid/Statystyki Ligue 1.py",
+    title="Statystyki Ligue 1",
+    icon="📊",
+)
+
+model_page = st.Page(
+    "pagesVis/Stwórz własny model.py",
+    title="Stwórz własny model",
+    icon="📊",
+)
+
+pg = st.navigation(pages = [homepage, premier_league, bundesliga, seriea, ligue1, laliga, premier_league_stats, bundesliga_stats, serie_a_stats, la_liga_stats, ligue_1_stats, model_page], position="hidden")
 
 st.sidebar.title("Wybierz stronę:")
 
@@ -86,5 +117,11 @@ if st.sidebar.button(
             key=f"SerieA"
         ):
             st.switch_page("pagesVis/Serie A.py")
+
+if st.sidebar.button(
+            "Stwórz własny model",
+            key=f"OwnModel"
+        ):
+            st.switch_page("pagesVis/Stwórz własny model.py")
 
 pg.run()

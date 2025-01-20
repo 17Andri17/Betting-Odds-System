@@ -17,32 +17,6 @@ import math
 from scipy.optimize import minimize_scalar
 from IPython.core.display import HTML
 
-
-def navbar():
-    cols = st.columns(6)
-    with cols[0]:
-        if st.button(
-            "Strona Główna",
-            key=f"HomeSPL"
-        ):
-            st.switch_page("Kursomat.py")
-    with cols[1]:
-        if st.button(
-            "Premier League",
-            key=f"PremierLeagueSPL"
-        ):
-            st.switch_page("pagesVis/Premier League.py")
-    with cols[2]:
-        st.write("Serie A")
-    with cols[3]:
-        st.write("Ligue1")
-    with cols[4]:
-        st.write("Bundesliga")
-    with cols[5]:
-        st.write("Ligue 1")
-
-# navbar()
-
 @st.cache_data
 def create_team_structure(idx, formation, starting_eleven):
     formation_parts = list(map(int, formation.split('-')))
@@ -523,7 +497,7 @@ def predict_outcome(input_features, model):
         prediction = model(input_tensor)
         return prediction.squeeze()[0].item(), prediction.squeeze()[1].item(), prediction.squeeze()[2].item()
 
-
+@st.cache_data
 def load_data():
     # players = st.session_state["playersPL"].copy()
     # matches = st.session_state["dfPL"].copy()
