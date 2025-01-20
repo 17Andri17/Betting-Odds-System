@@ -497,7 +497,6 @@ def predict_outcome(input_features, model):
         prediction = model(input_tensor)
         return prediction.squeeze()[0].item(), prediction.squeeze()[1].item(), prediction.squeeze()[2].item()
 
-@st.cache_data
 def load_data():
     # players = st.session_state["playersPL"].copy()
     # matches = st.session_state["dfPL"].copy()
@@ -778,7 +777,7 @@ for j in range(min(5, len(away_matches))):
         <div style="width: 100px;">{int(away_matches.iloc[j]['home_goals'])} - {int(away_matches.iloc[j]['away_goals'])}</div>
         <div style="width: 200px;">{away_matches.iloc[j]['away_team']}</div>
     """
-    if away_matches.iloc[j]['home_team'] == home_team:
+    if away_matches.iloc[j]['home_team'] == away_team:
         if away_matches.iloc[j]['home_goals'] > away_matches.iloc[j]['away_goals']:
             last_away += "<div style='width: 50px; background-color: green;'>W</div>"
         elif away_matches.iloc[j]['home_goals'] < away_matches.iloc[j]['away_goals']:
