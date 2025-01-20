@@ -41,11 +41,10 @@ def navbar():
     with cols[5]:
         st.write("Ligue 1")
 
-navbar()
+# navbar()
 
 @st.cache_data
 def create_team_structure(idx, formation, starting_eleven):
-    print(starting_eleven)
     formation_parts = list(map(int, formation.split('-')))
     used_players = set()
     starting_eleven["main_pos"] = starting_eleven["position_x"].apply(lambda x: x.split(",")[0])
@@ -544,6 +543,24 @@ def load_data():
 def getCourse(prob):
     return round(1 / prob, 2)
 
+def select_last_matches(df, team, date, n, where="all"):
+        if where == "home":
+            team_matches = df[(df["home_team"] == team) & (df["date"]<date)]
+        elif where == "away":
+            team_matches = df[(df["away_team"] == team) & (df["date"]<date)]
+        else:
+            team_matches = df[((df["home_team"] == team) | (df["away_team"] == team)) & (df["date"]<date)]
+        team_matches_sorted = team_matches.sort_values(by="date", ascending=False)
+        return team_matches_sorted.head(n)
+
+def get_stat(df, team, stat, other_team = False, sum = False):
+        df[stat] = df.apply(lambda x: x["home_" + stat] if x["home_team"] == team else x["away_" + stat], axis=1)
+        if other_team:
+            df[stat] = df.apply(lambda x: x["away_" + stat] if x["home_team"] == team else x["home_" + stat], axis=1)
+        if sum:
+            df[stat] = df.apply(lambda x: x["home_" + stat] + x["away_" + stat], axis=1)
+        df["new_date"] = df["date"].apply(lambda x: str(x)[5:7]+"."+str(x)[8:10])
+        return df[[stat, "new_date"]]
 
 players, matches, odds, home_team, date = load_data()
 curr_match = matches[(matches["date"] == date) & (matches["home_team"] == home_team)].iloc[0]
@@ -617,17 +634,6 @@ merged_df["B365probsD"] = 1 / merged_df["B365D"] / (1 / merged_df["B365H"] + 1 /
 merged_df["B365probsA"] = 1 / merged_df["B365A"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
 
 
-
-# date = st.session_state['PLstats_id']["date"]
-# home_team = st.session_state['PLstats_id']["home_team"]
-# away_team = st.session_state['PLstats_id']["away_team"]
-
-# home_goals = st.session_state['PLstats_id']["home_goals"]
-# away_goals = st.session_state['PLstats_id']["away_goals"]
-
-# formation_home = st.session_state['PLstats_id']["formation_home"]
-# formation_away = st.session_state['PLstats_id']["formation_away"]
-
 away_team = curr_match["away_team"]
 home_goals = curr_match["home_goals"]
 away_goals = curr_match["away_goals"]
@@ -647,6 +653,7 @@ match_probabilities = get_probabilities(all_features)
 st.markdown(f"""
                 <p style='text-align: center; font-size: 40px;'>{home_team}  {int(home_goals)} - {int(away_goals)}  {away_team}</p>
                 """, unsafe_allow_html=True)
+
 
 
 categories = ['Home Win', 'Draw', 'Away Win']
@@ -714,15 +721,19 @@ home_stats = [int(v) for v in home_stats]
 away_stats = [int(v) for v in away_stats]
 
 
-col1, col2 = st.columns([4,4])
-with col1:
-    with st.spinner("Generowanie składów"):
-        squads(players, date, home_team, away_team, formation_home, formation_away)
-with col2:
-    statsGraph(home_stats, away_stats, categories)
-    
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Informacje", "Statystyki", "Składy", "Kursy bukmacherskie", "Inne"])
 
-col2, col3 = st.columns(2)
+with tab2:
+    col1, col2, col3 = st.columns([4, 11, 4])
+    with col2:
+        statsGraph(home_stats, away_stats, categories)
+
+with tab3:
+    col1, col2, col3 = st.columns([1, 4, 1])
+    with col2:
+        with st.spinner("Generowanie składów"):
+            squads(players, date, home_team, away_team, formation_home, formation_away)
+
 
 
 home_matches = matches[(matches["date"] < date) &
@@ -733,85 +744,94 @@ home_matches = home_matches[["date", "time", "home_team", "home_goals", "away_go
 home_matches = home_matches.sort_values(by="date", ascending=False)
 away_matches = away_matches[["date", "time", "home_team", "home_goals", "away_goals", "away_team"]]
 away_matches = away_matches.sort_values(by="date", ascending=False)
-with col2:
-    data = f"""
-                <div style="text-align: center; font-size: 15px;
-                    background-color: #f8f9fa; 
-                    border-radius: 10px; 
-                    padding: 5px; 
-                    margin: 5px;
-                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
-                <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze {home_team}</div>
-                """
-    
-    if len(home_matches) == 0:
-        data += "<div style='font-size: 20px;'>Brak danych na temat ostatnich meczów</div>"
 
-    for j in range(min(5, len(home_matches))):
-        data += f"""
-        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
-            <div style="width: 120px;">{home_matches.iloc[j]['date'].date()} {home_matches.iloc[j]['time']}</div>
-            <div style="width: 200px;">{home_matches.iloc[j]['home_team']}</div>
-            <div style="width: 100px;">{int(home_matches.iloc[j]['home_goals'])} - {int(home_matches.iloc[j]['away_goals'])}</div>
-            <div style="width: 200px;">{home_matches.iloc[j]['away_team']}</div>
-        """
-        if home_matches.iloc[j]['home_team'] == home_team:
-            if home_matches.iloc[j]['home_goals'] > home_matches.iloc[j]['away_goals']:
-                data += "<div style='width: 50px; background-color: green;'>W</div>"
-            elif home_matches.iloc[j]['home_goals'] < home_matches.iloc[j]['away_goals']:
-                data += "<div style='width: 50px; background-color: red;'>L</div>"
-            else:
-                data += "<div style='width: 50px; background-color: gray;'>D</div>"
+last_home = f"""
+    <div style="text-align: center; font-size: 15px;
+        background-color: #f8f9fa; 
+        border-radius: 10px; 
+        padding: 5px; 
+        margin: 5px;
+        box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
+    <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze {home_team}</div>
+    """
+
+if len(home_matches) == 0:
+    last_home += "<div style='font-size: 20px;'>Brak danych na temat ostatnich meczów</div>"
+
+for j in range(min(5, len(home_matches))):
+    last_home += f"""
+    <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+        <div style="width: 120px;">{home_matches.iloc[j]['date'].date()} {home_matches.iloc[j]['time']}</div>
+        <div style="width: 200px;">{home_matches.iloc[j]['home_team']}</div>
+        <div style="width: 100px;">{int(home_matches.iloc[j]['home_goals'])} - {int(home_matches.iloc[j]['away_goals'])}</div>
+        <div style="width: 200px;">{home_matches.iloc[j]['away_team']}</div>
+    """
+    if home_matches.iloc[j]['home_team'] == home_team:
+        if home_matches.iloc[j]['home_goals'] > home_matches.iloc[j]['away_goals']:
+            last_home += "<div style='width: 50px; background-color: green;'>W</div>"
+        elif home_matches.iloc[j]['home_goals'] < home_matches.iloc[j]['away_goals']:
+            last_home += "<div style='width: 50px; background-color: red;'>L</div>"
         else:
-            if home_matches.iloc[j]['home_goals'] > home_matches.iloc[j]['away_goals']:
-                data += "<div style='width: 50px; background-color: red;'>L</div>"
-            elif home_matches.iloc[j]['home_goals'] < home_matches.iloc[j]['away_goals']:
-                data += "<div style='width: 50px; background-color: green;'>W</div>"
-            else:
-                data += "<div style='width: 50px; background-color: gray;'>D</div>"
-        data+="</div>"
-    data += "</div>"
-    st.markdown(data, unsafe_allow_html=True)
-
-with col3:
-    data = f"""
-                <div style="text-align: center; font-size: 15px;
-                    background-color: #f8f9fa; 
-                    border-radius: 10px; 
-                    padding: 5px; 
-                    margin: 5px;
-                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
-                <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze {away_team}</div>
-                """
-    
-    if len(away_matches) == 0:
-        data += "<div style='font-size: 20px;'>Brak danych na temat ostatnich meczów</div>"
-
-    for j in range(min(5, len(away_matches))):
-        data += f"""
-        <div style="display: flex; justify-content: center; margin-bottom: 5px;">
-            <div style="width: 120px;">{away_matches.iloc[j]['date'].date()} {away_matches.iloc[j]['time']}</div>
-            <div style="width: 200px;">{away_matches.iloc[j]['home_team']}</div>
-            <div style="width: 100px;">{int(away_matches.iloc[j]['home_goals'])} - {int(away_matches.iloc[j]['away_goals'])}</div>
-            <div style="width: 200px;">{away_matches.iloc[j]['away_team']}</div>
-        """
-        if away_matches.iloc[j]['home_team'] == home_team:
-            if away_matches.iloc[j]['home_goals'] > away_matches.iloc[j]['away_goals']:
-                data += "<div style='width: 50px; background-color: green;'>W</div>"
-            elif away_matches.iloc[j]['home_goals'] < away_matches.iloc[j]['away_goals']:
-                data += "<div style='width: 50px; background-color: red;'>L</div>"
-            else:
-                data += "<div style='width: 50px; background-color: gray;'>D</div>"
+            last_home += "<div style='width: 50px; background-color: gray;'>D</div>"
+    else:
+        if home_matches.iloc[j]['home_goals'] > home_matches.iloc[j]['away_goals']:
+            last_home += "<div style='width: 50px; background-color: red;'>L</div>"
+        elif home_matches.iloc[j]['home_goals'] < home_matches.iloc[j]['away_goals']:
+            last_home += "<div style='width: 50px; background-color: green;'>W</div>"
         else:
-            if away_matches.iloc[j]['home_goals'] > away_matches.iloc[j]['away_goals']:
-                data += "<div style='width: 50px; background-color: red;'>L</div>"
-            elif away_matches.iloc[j]['home_goals'] < away_matches.iloc[j]['away_goals']:
-                data += "<div style='width: 50px; background-color: green;'>W</div>"
-            else:
-                data += "<div style='width: 50px; background-color: gray;'>D</div>"
-        data+="</div>"
-    data += "</div>"
-    st.markdown(data, unsafe_allow_html=True)
+            last_home += "<div style='width: 50px; background-color: gray;'>D</div>"
+    last_home+="</div>"
+last_home += "</div>"
+
+last_away = f"""
+            <div style="text-align: center; font-size: 15px;
+                background-color: #f8f9fa; 
+                border-radius: 10px; 
+                padding: 5px; 
+                margin: 5px;
+                box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
+            <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze {away_team}</div>
+            """
+
+if len(away_matches) == 0:
+    last_away += "<div style='font-size: 20px;'>Brak danych na temat ostatnich meczów</div>"
+
+for j in range(min(5, len(away_matches))):
+    last_away += f"""
+    <div style="display: flex; justify-content: center; margin-bottom: 5px;">
+        <div style="width: 120px;">{away_matches.iloc[j]['date'].date()} {away_matches.iloc[j]['time']}</div>
+        <div style="width: 200px;">{away_matches.iloc[j]['home_team']}</div>
+        <div style="width: 100px;">{int(away_matches.iloc[j]['home_goals'])} - {int(away_matches.iloc[j]['away_goals'])}</div>
+        <div style="width: 200px;">{away_matches.iloc[j]['away_team']}</div>
+    """
+    if away_matches.iloc[j]['home_team'] == home_team:
+        if away_matches.iloc[j]['home_goals'] > away_matches.iloc[j]['away_goals']:
+            last_away += "<div style='width: 50px; background-color: green;'>W</div>"
+        elif away_matches.iloc[j]['home_goals'] < away_matches.iloc[j]['away_goals']:
+            last_away += "<div style='width: 50px; background-color: red;'>L</div>"
+        else:
+            last_away += "<div style='width: 50px; background-color: gray;'>D</div>"
+    else:
+        if away_matches.iloc[j]['home_goals'] > away_matches.iloc[j]['away_goals']:
+            last_away += "<div style='width: 50px; background-color: red;'>L</div>"
+        elif away_matches.iloc[j]['home_goals'] < away_matches.iloc[j]['away_goals']:
+            last_away += "<div style='width: 50px; background-color: green;'>W</div>"
+        else:
+            last_away += "<div style='width: 50px; background-color: gray;'>D</div>"
+    last_away+="</div>"
+last_away += "</div>"
+
+
+with tab5:
+    col2, col3 = st.columns(2)
+    with col2:        
+        st.markdown(last_home, unsafe_allow_html=True)
+
+    with col3:        
+        st.markdown(last_away, unsafe_allow_html=True)
+        
+
+    
     filtr1, filtr2 = st.columns(2)
 
     css = """
@@ -819,32 +839,12 @@ with col3:
                 cursor: pointer;
             }
     """
-
     st.html(f"<style>{css}</style>")
-
     with filtr1:
         team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
     with filtr2:
         stat_filter = st.selectbox("Wybierz statystykę", options=["Bramki w meczu", "Strzelone bramki", "Stracone bramki"], key="stat_filter")
-
-    def select_last_matches(df, team, date, n, where="all"):
-        if where == "home":
-            team_matches = df[(df["home_team"] == team) & (df["date"]<date)]
-        elif where == "away":
-            team_matches = df[(df["away_team"] == team) & (df["date"]<date)]
-        else:
-            team_matches = df[((df["home_team"] == team) | (df["away_team"] == team)) & (df["date"]<date)]
-        team_matches_sorted = team_matches.sort_values(by="date", ascending=False)
-        return team_matches_sorted.head(n)
-
-    def get_stat(df, team, stat, other_team = False, sum = False):
-        df[stat] = df.apply(lambda x: x["home_" + stat] if x["home_team"] == team else x["away_" + stat], axis=1)
-        if other_team:
-            df[stat] = df.apply(lambda x: x["away_" + stat] if x["home_team"] == team else x["home_" + stat], axis=1)
-        if sum:
-            df[stat] = df.apply(lambda x: x["home_" + stat] + x["away_" + stat], axis=1)
-        df["new_date"] = df["date"].apply(lambda x: str(x)[5:7]+"."+str(x)[8:10])
-        return df[[stat, "new_date"]]
+    
 
     team = team_filter
     stat_name = stat_filter
@@ -925,12 +925,12 @@ with col3:
         """
     data += "</div>"
     st.markdown(data, unsafe_allow_html=True)
-with col2:
-    st.pyplot(fig21)
-    if (len(probabilities)>0):
-        st.pyplot(fig22)
-    # with st.spinner("Generowanie składów"):
-    #     squads(players, date, home_team, away_team, formation_home, formation_away)
+with tab1:
+    col1, col2, col3 = st.columns([1,2,1])
+    with(col2):
+        st.pyplot(fig21)
+        if (len(probabilities)>0):
+            st.pyplot(fig22)
 
 # Dane do tabeli
 wyniki = [
@@ -948,20 +948,68 @@ wyniki = [
 rows, cols = 4, 3  # Liczba wierszy i kolumn
 # table_data = [wyniki[i:i + cols] for i in range(0, len(wyniki), cols)]
 table_data = [wyniki[i:i + cols] for i in range(0, len(wyniki), cols)]
+match_score = str(curr_match["home_goals"]) + ":" + str(curr_match["away_goals"])
 
-# Tworzenie HTML
-html_content = """
+correct_scores = ""
+for row in table_data:
+    for cell in row:
+        wynik, kurs = cell
+        print(wynik)
+        if wynik == match_score:
+            correct_scores += f"""
+            <div class="cell correct">
+                <span class="result">{wynik}</span>
+                <span class="odds">{kurs:.2f}</span>
+            </div>
+            """
+        else:
+            correct_scores += f"""
+            <div class="cell">
+                <span class="result">{wynik}</span>
+                <span class="odds">{kurs:.2f}</span>
+            </div>
+            """
+
+odds_style = """
 <style>
+    .odds-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-width: 1000px;
+        width: 90%;
+        margin: 20px auto;
+        font-family: Arial, sans-serif;
+    }
+
+    .odds-group {
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #f5f5f5;
+        color: #333;
+        width: 100%;
+    }
+
+    .odds-group h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 18px;
+        text-align: center;
+        color: #111;
+    }
+
     .table-container {
         display: flex;
         flex-wrap: wrap;
-        gap: 15px; /* Odstęp między komórkami */
-        max-width: 800px;
-        margin: 20px auto;
+        gap: 15px;
+        align-items: center;
+        justify-content: center;
     }
+
     .cell {
-        width: 120px;
-        height: 60px;
+        width: 160px;
+        height: 62px;
         background-color: #333333;
         border-radius: 12px;
         display: flex;
@@ -970,34 +1018,108 @@ html_content = """
         align-items: center;
         padding: 0 15px;
         color: white;
-        font-family: Arial, sans-serif;
     }
+
+    .correct {
+        background-color: #26943b;
+    }
+
     .result {
-        font-size: 12px;
+        font-size: 13px;
         text-align: left;
     }
+
     .odds {
-        font-size: 16px;
+        font-size: 17px;
         font-weight: bold;
         text-align: right;
     }
 </style>
-<div class="table-container">
+"""
+odds_content = f"""<div class="odds-container">
+    <!-- 1x2 Odds Group -->
+    <div class="odds-group" style="background-color: #d1e7dd;">
+        <h3>Wynik meczu</h3>
+        <div class="table-container">
+            <!-- Example cells for 1x2 odds -->
+            <div class="cell correct">
+                <span class="result">1</span>
+                <span class="odds">2.50</span>
+            </div>
+            <div class="cell">
+                <span class="result">X</span>
+                <span class="odds">3.20</span>
+            </div>
+            <div class="cell">
+                <span class="result">2</span>
+                <span class="odds">2.80</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- No Draw Odds Group -->
+    <div class="odds-group" style="background-color: #d1e7dd;">
+        <h3>Mecz bez remisu</h3>
+        <div class="table-container">
+            <!-- Example cells for no draw odds -->
+            <div class="cell correct">
+                <span class="result">1</span>
+                <span class="odds">1.90</span>
+            </div>
+            <div class="cell">
+                <span class="result">2</span>
+                <span class="odds">1.95</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Double Chance Odds Group -->
+    <div class="odds-group" style="background-color: #d1e7dd;">
+        <h3>Double Chance</h3>
+        <div class="table-container">
+            <!-- Example cells for double chance odds -->
+            <div class="cell">
+                <span class="result">1X</span>
+                <span class="odds">1.35</span>
+            </div>
+            <div class="cell">
+                <span class="result">12</span>
+                <span class="odds">1.50</span>
+            </div>
+            <div class="cell correct">
+                <span class="result">X2</span>
+                <span class="odds">1.40</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Over/Under Goals Odds Group -->
+    <div class="odds-group" style="background-color: #d1e7dd;">
+        <h3>Podwójna szansa</h3>
+        <div class="table-container">
+            <!-- Example cells for over/under goals odds -->
+            <div class="cell correct">
+                <span class="result">Over 2.5</span>
+                <span class="odds">1.80</span>
+            </div>
+            <div class="cell">
+                <span class="result">Under 2.5</span>
+                <span class="odds">2.00</span>
+            </div>
+        </div>
+    </div>
+    <div class="odds-group" style="background-color: #d1e7dd;">
+        <h3>Dokładny Wynik</h3>
+        <div class="table-container">
+            {correct_scores}
+        </div>
+    </div>
+</div>
 """
 
-for row in table_data:
-    for cell in row:
-        wynik, kurs = cell
-        html_content += f"""
-        <div class="cell">
-            <span class="result">{wynik}</span>
-            <span class="odds">{kurs:.2f}</span>
-        </div>
-        """
-
-html_content += "</div>"
-
-col1, col2 = st.columns(2)
+odds_html = odds_style + odds_content
 # Wyświetlenie tabeli w Streamlit
-with col1:
-    st.components.v1.html(html_content, height=800)
+with tab4:
+    col1, col2, col3 = st.columns([1,4,1])
+    with col2:
+        st.components.v1.html(odds_html, height=1200)
