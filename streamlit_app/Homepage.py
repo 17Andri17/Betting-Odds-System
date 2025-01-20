@@ -82,46 +82,55 @@ pg = st.navigation(pages = [homepage, premier_league, bundesliga, seriea, ligue1
 
 st.sidebar.title("Wybierz stronę:")
 
-if st.sidebar.button(
-            "Strona Główna",
-            key=f"Home"
-        ):
-            st.switch_page("Kursomat.py")
+# if st.sidebar.button(
+#             "Strona Główna",
+#             key=f"Home"
+#         ):
+#             st.switch_page("Kursomat.py")
 
-if st.sidebar.button(
-            "Bundesliga",
-            key=f"Bundesliga"
-        ):
-            st.switch_page("pagesVis/Bundesliga.py")
+# if st.sidebar.button(
+#             "Bundesliga",
+#             key=f"Bundesliga"
+#         ):
+#             st.switch_page("pagesVis/Bundesliga.py")
 
-if st.sidebar.button(
-            "La Liga",
-            key=f"La Liga"
-        ):
-            st.switch_page("pagesVis/La Liga.py")
+# if st.sidebar.button(
+#             "La Liga",
+#             key=f"La Liga"
+#         ):
+#             st.switch_page("pagesVis/La Liga.py")
 
-if st.sidebar.button(
-            "Ligue 1",
-            key=f"Ligue1"
-        ):
-            st.switch_page("pagesVis/Ligue 1.py")
+# if st.sidebar.button(
+#             "Ligue 1",
+#             key=f"Ligue1"
+#         ):
+#             st.switch_page("pagesVis/Ligue 1.py")
 
-if st.sidebar.button(
-            "Premier League",
-            key=f"PremierLeague"
-        ):
-            st.switch_page("pagesVis/Premier League.py")
+# if st.sidebar.button(
+#             "Premier League",
+#             key=f"PremierLeague"
+#         ):
+#             st.switch_page("pagesVis/Premier League.py")
 
-if st.sidebar.button(
-            "Serie A",
-            key=f"SerieA"
-        ):
-            st.switch_page("pagesVis/Serie A.py")
+# if st.sidebar.button(
+#             "Serie A",
+#             key=f"SerieA"
+#         ):
+#             st.switch_page("pagesVis/Serie A.py")
 
-if st.sidebar.button(
-            "Stwórz własny model",
-            key=f"OwnModel"
-        ):
-            st.switch_page("pagesVis/Stwórz własny model.py")
+# if st.sidebar.button(
+#             "Stwórz własny model",
+#             key=f"OwnModel"
+#         ):
+#             st.switch_page("pagesVis/Stwórz własny model.py")
+
+with st.sidebar:
+    st.page_link("Kursomat.py", label="Strona główna", icon="🏠")
+    st.page_link("pagesVis/Premier League.py", label="Premier League", icon="⚽")
+    st.page_link("pagesVis/La Liga.py", label="La Liga", icon="⚽")
+    st.page_link("pagesVis/Serie A.py", label="Serie A", icon="⚽")
+    st.page_link("pagesVis/Bundesliga.py", label="Bundesliga", icon="⚽")
+    st.page_link("pagesVis/Ligue 1.py", label="Ligue 1", icon="⚽")
+    st.page_link("pagesVis/Stwórz własny model.py", label="Stwórz własny model", icon="📊")
 
 pg.run()
