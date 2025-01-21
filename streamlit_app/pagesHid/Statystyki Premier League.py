@@ -667,7 +667,6 @@ def generate_html_table(teams_stats):
 
 
 players, matches, odds, home_team, date, standings = load_data()
-print(home_team)
 curr_match = matches[(matches["date"] == date) & (matches["home_team"] == home_team)].iloc[0]
 matches2 = matches.copy()
 
