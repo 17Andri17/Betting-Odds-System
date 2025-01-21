@@ -126,11 +126,11 @@ st.sidebar.title("Wybierz stronę:")
 
 with st.sidebar:
     st.page_link("Kursomat.py", label="Strona główna", icon="🏠")
-    st.page_link("pagesVis/Premier League.py", label="Premier League", icon="⚽")
-    st.page_link("pagesVis/La Liga.py", label="La Liga", icon="⚽")
-    st.page_link("pagesVis/Serie A.py", label="Serie A", icon="⚽")
     st.page_link("pagesVis/Bundesliga.py", label="Bundesliga", icon="⚽")
+    st.page_link("pagesVis/La Liga.py", label="La Liga", icon="⚽")
     st.page_link("pagesVis/Ligue 1.py", label="Ligue 1", icon="⚽")
+    st.page_link("pagesVis/Premier League.py", label="Premier League", icon="⚽")
+    st.page_link("pagesVis/Serie A.py", label="Serie A", icon="⚽")
     st.page_link("pagesVis/Stwórz własny model.py", label="Stwórz własny model", icon="📊")
 
 pg.run()
