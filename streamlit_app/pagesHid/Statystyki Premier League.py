@@ -434,14 +434,33 @@ def get_probabilities(all_fetures):
     probabilities["lambda_goals"] = solve_lambda(probabilities["over25"], 2)
     probabilities["lambda_home_goals"] = solve_lambda(probabilities["home_over15"], 1)
     probabilities["lambda_away_goals"] = solve_lambda(probabilities["away_over15"], 1)
+
+    probabilities["1x"] = probabilities["draw"] + probabilities["home_win"]
+    probabilities["x2"] = probabilities["draw"] + probabilities["away_win"]
+    probabilities["12"] = probabilities["home_win"] + probabilities["away_win"]
+
+    probabilities["no_draw_home_win"] = probabilities["home_win"] / (probabilities["home_win"] + probabilities["away_win"])
+    probabilities["no_draw_away_win"] = probabilities["away_win"] / (probabilities["home_win"] + probabilities["away_win"])
+
+    probabilities["btts"] = poisson_probability(probabilities["lambda_home_goals"], 0.5, over=True)*poisson_probability(probabilities["lambda_away_goals"], 0.5, over=True)
+    probabilities["no_btts"] = 1 - poisson_probability(probabilities["lambda_home_goals"], 0.5, over=True)*poisson_probability(probabilities["lambda_away_goals"], 0.5, over=True)
+
+    probabilities["under05"] = poisson_probability(probabilities["lambda_goals"], 0.5, over=False)
+    probabilities["over05"] = poisson_probability(probabilities["lambda_goals"], 0.5, over=True)
     probabilities["under15"] = poisson_probability(probabilities["lambda_goals"], 1.5, over=False)
     probabilities["over15"] = poisson_probability(probabilities["lambda_goals"], 1.5, over=True)
     probabilities["under35"] = poisson_probability(probabilities["lambda_goals"], 3.5, over=False)
     probabilities["over35"] = poisson_probability(probabilities["lambda_goals"], 3.5, over=True)
+
     probabilities["home_under05"] = poisson_probability(probabilities["lambda_home_goals"], 0.5, over=False)
     probabilities["home_over05"] = poisson_probability(probabilities["lambda_home_goals"], 0.5, over=True)
     probabilities["away_under05"] = poisson_probability(probabilities["lambda_away_goals"], 0.5, over=False)
     probabilities["away_over05"] = poisson_probability(probabilities["lambda_away_goals"], 0.5, over=True)
+    probabilities["home_under25"] = poisson_probability(probabilities["lambda_home_goals"], 2.5, over=False)
+    probabilities["home_over25"] = poisson_probability(probabilities["lambda_home_goals"], 2.5, over=True)
+    probabilities["away_under25"] = poisson_probability(probabilities["lambda_away_goals"], 2.5, over=False)
+    probabilities["away_over25"] = poisson_probability(probabilities["lambda_away_goals"], 2.5, over=True)
+
     probabilities["exact_11"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 1, 1)
     probabilities["exact_00"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 0, 0)
     probabilities["exact_22"] = exact_score_probability(probabilities["lambda_home_goals"], probabilities["lambda_away_goals"], 2, 2)
@@ -499,10 +518,18 @@ def predict_outcome(input_features, model):
 
 @st.cache_data
 def load_data():
-    # players = st.session_state["playersPL"].copy()
-    # matches = st.session_state["dfPL"].copy()
-    # odds = st.session_state["oddsPL"].copy()
+    home_team = st.query_params["home_team"]
+    date = pd.to_datetime(st.query_params["date"])
+    league = st.query_params["league"]
     odds = pd.read_csv("../odds.csv")
+    standings = pd.read_csv("../standings_with_new.csv")
+    standings['date']=pd.to_datetime(standings['date'])
+    standings['goal_difference'] = standings['goal_difference'].astype(int)
+    standings['goals'] = standings['goals'].astype(int)
+    standings['goals_conceded'] = standings['goals_conceded'].astype(int)
+    standings = standings[standings["league"] == league]
+    current_standings_date = standings[standings['date'] < date]["date"].tail(1).iloc[0]
+    standings = standings[standings["date"] == current_standings_date]
     players = pd.read_csv("../players_pl.csv")
     players_new = pd.read_csv("../new_players.csv")
     players = pd.concat([players, players_new], ignore_index=True)
@@ -510,7 +537,7 @@ def load_data():
     matches = pd.read_csv("../final_prepared_data_with_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
     players = players.rename(columns={"position": "position_x"})
-    return players, matches, odds
+    return players, matches, odds, home_team, date, standings
 
 def getCourse(prob):
     return round(1 / prob, 2)
@@ -534,9 +561,114 @@ def get_stat(df, team, stat, other_team = False, sum = False):
         df["new_date"] = df["date"].apply(lambda x: str(x)[5:7]+"."+str(x)[8:10])
         return df[[stat, "new_date"]]
 
-players, matches, odds = load_data()
-home_team = st.query_params["home_team"]
-date = pd.to_datetime(st.query_params["date"])
+def generate_html_table(teams_stats):
+    html_template = """
+        <style>
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                text-align: center;
+                background-color: #f9f9f9;
+                color:black;
+                border: 0px solid rgba(34, 34, 38, 0.25);
+                font: Arial;
+            th, td {{
+                padding: 5px;
+                border: 0px solid rgba(34, 34, 38, 0.25);
+                text-align: center;
+                width: 1%;
+            }}
+            th {{
+                background-color: #f9f9f9;
+                color: rgba(34, 34, 38, 0.45);
+                font-weight: bold;
+            }}
+            tr:hover {{
+                background-color: #e6e6e6;
+            }}
+            td {{
+                line-height: 25px;
+                padding-top: 2px;
+                padding-bottom: 2px;
+            }}
+            th:last-child, td:last-child {{
+                font-weight: bold;
+            }}
+            th:nth-child(2), td:nth-child(2) {{
+                width: 15%;
+                text-align: left;
+            }}
+            th:nth-child(1), td:nth-child(1) {{
+                width: 0%;
+            }}
+            .highlight-green td:nth-child(1) span {{
+                display: inline-block;
+                width: 25px;
+                height: 25px;
+                line-height: 25px;
+                border-radius: 50%;
+                background-color: #26943b;
+                color: white;
+                font-weight: bold;
+            }}
+            .highlight-red td:nth-child(1) span {{
+                display: inline-block;
+                width: 25px;
+                height: 25px;
+                line-height: 25px;
+                border-radius: 50%;
+                background-color: #c1262d;
+                color: white;
+                font-weight: bold;
+            }}
+        </style>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Zespół</th>
+                    <th>M</th>
+                    <th>W</th>
+                    <th>R</th>
+                    <th>P</th>
+                    <th>+/-</th>
+                    <th>+</th>
+                    <th>-</th>
+                    <th>Pkt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows}
+            </tbody>
+        </table>
+    </body>
+    </html>
+    """
+
+    rows = ""
+    for team in teams_stats:
+        row_class = (
+            "highlight-green" if team["highlight"] == "green" else "highlight-red" if team["highlight"] == "red" else ""
+        )
+        rows += f"""
+        <tr class="{row_class}">
+            <td><span>{team["position"]}</span></td>
+            <td>{team["name"]}</td>
+            <td>{team["played"]}</td>
+            <td>{team["wins"]}</td>
+            <td>{team["draws"]}</td>
+            <td>{team["losses"]}</td>
+            <td>{team["diff"]}</td>
+            <td>{team["goals_scored"]}</td>
+            <td>{team["goals_conceded"]}</td>
+            <td>{team["points"]}</td>
+        </tr>
+        """
+    return html_template.format(rows=rows)
+
+
+players, matches, odds, home_team, date, standings = load_data()
+print(home_team)
 curr_match = matches[(matches["date"] == date) & (matches["home_team"] == home_team)].iloc[0]
 matches2 = matches.copy()
 
@@ -809,9 +941,12 @@ with tab5:
     filtr1, filtr2 = st.columns(2)
 
     css = """
-    .st-key-team_filter *, .st-key-stat_filter *, .st-key-team_filter, .st-key-stat_filter{
-                cursor: pointer;
-            }
+    .st-key-team_filter *, .st-key-stat_filter *, .st-key-team_filter, .st-key-stat_filter {
+        cursor: pointer;
+    }
+    .stMainBlockContainer {
+        padding-top: 3rem !important;
+    }
     """
     st.html(f"<style>{css}</style>")
     with filtr1:
@@ -899,14 +1034,157 @@ with tab5:
         """
     data += "</div>"
     st.markdown(data, unsafe_allow_html=True)
-with tab1:
-    col1, col2, col3 = st.columns([1,2,1])
-    with(col2):
-        st.pyplot(fig21)
-        if (len(probabilities)>0):
-            st.pyplot(fig22)
 
-# Dane do tabeli
+
+############ Zakładka z informacjami ############
+selected_columns_standings = ['team', 'matches_played', 'wins', 'draws', 'defeats', 'goal_difference', 'goals', 'goals_conceded', 'points']
+table = standings[selected_columns_standings]
+table = table.sort_values(["points", "goal_difference", "goals"], ascending=False)
+table['place'] = range(1, len(table) + 1)
+table = table.set_index('place')
+standings_data = []
+for i, row in table.iterrows():
+    if row["team"] == home_team or row["team"] == away_team:
+        team_stats = {}
+        team_stats["position"] = i
+        team_stats["highlight"] = ""
+        if i<5:
+            team_stats["highlight"] = "green"
+        if i>17:
+            team_stats["highlight"] = "red"
+        team_stats["name"] = row['team']
+        team_stats["played"] = row['matches_played']
+        team_stats["wins"] = row['wins']
+        team_stats["draws"] = row['draws']
+        team_stats["losses"] = row['defeats']
+        team_stats["diff"] = row['goal_difference']
+        if team_stats["diff"] > 0:
+            team_stats["diff"] = "+" + str(row['goal_difference'])
+        team_stats["goals_scored"] = row['goals']
+        team_stats["goals_conceded"] = row['goals_conceded']
+        team_stats["points"] = row['points']
+        standings_data.append(team_stats)
+
+html_table = generate_html_table(standings_data)
+html_table_final = """
+<style>
+    .tab {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        width: 90%;
+        padding: 16px;
+        background-color: #f9f9f9;
+        margin: auto;
+    }
+    .tab_title {
+        font-size: 22px;
+        font-weight: bold;
+        color: #333;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+</style> """ + f"""
+<div class="tab">
+<div class="tab_title">Klasyfikacja przedmeczowa</div>
+{html_table}
+</div>
+"""
+
+st.markdown(
+    """
+    <style>
+    .tab {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        width: 400px;
+        padding: 16px;
+        background-color: #f9f9f9;
+        margin: auto;
+    }
+    .row {
+        margin-bottom: 8px;
+    }
+    .small_title {
+        font-size: 12px;
+        color: #777;
+        margin-bottom: -2px;
+    }
+    .text {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+league_map = {
+    "pl": "Premier League",
+    "ll": "La Liga",
+    "bl": "Bundesliga",
+    "l1": "Ligue 1",
+    "sa": "Serie A",
+}
+
+ref_df = matches[matches["referee"] == curr_match["referee"]][["home_cards_yellow", "home_cards_red", "away_cards_yellow", "away_cards_red"]]
+ref_df.dropna(how='all')
+ref_df["sum_yellow"] = ref_df["home_cards_yellow"] + ref_df["away_cards_yellow"]
+ref_df["sum_red"] = ref_df["home_cards_red"] + ref_df["away_cards_red"]
+yellow_avg = ref_df["sum_yellow"].mean()
+red_avg = ref_df["sum_red"].mean()
+
+# HTML structure for the tab
+tab_html = f"""
+<div class="tab">
+    <div class="row">
+        <div class="small_title">Data i godzina</div>
+        <div class="text">{curr_match['date'].date().strftime('%d.%m.%Y')} • {curr_match['time']}</div>
+    </div>
+    <div class="row">
+        <div class="small_title">Rozgrywki</div>
+        <div class="text">{league_map[curr_match["league"]]}, Kolejka {curr_match["round"]}</div>
+    </div>
+    <div class="row">
+        <div class="small_title">Stadion</div>
+        <div class="text">{curr_match["Stadium"]}</div>
+    </div>
+    <div class="row">
+        <div class="small_title">Lokalizacja</div>
+        <div class="text">{curr_match["City"]}, {curr_match["Country"]}</div>
+    </div>
+    <div class="row">
+        <div class="small_title">{"Frekwencja" if curr_match["attendance_value"] > 0 else "Pojemność"}</div>
+        <div class="text">{int(curr_match["attendance_value"]) if curr_match["attendance_value"] > 0 else curr_match["Capacity"]}</div>
+    </div>
+    <div class="row">
+        <div class="small_title">Sędzia</div>
+        <div class="text">{curr_match["referee"] if curr_match["referee"] != "" else "-"}</div>
+    </div>
+    <div class="row">
+        <div class="small_title">Średnie kartki</div>
+        <div class="text">
+            <span><span class="emoji">🟨</span>{yellow_avg:.2f}</span>
+            <span><span class="emoji">🟥</span>{red_avg:.2f}</span>
+        </div>
+    </div>
+</div>
+"""
+
+
+
+with tab1:
+    col1, col2 = st.columns([1,1])
+    with col1:
+        st.components.v1.html(html_table_final, height=280)
+        # st.pyplot(fig21)
+        # if (len(probabilities)>0):
+        #     st.pyplot(fig22)
+    with col2:
+        st.markdown(tab_html, unsafe_allow_html=True)
+
+############ Zakładka z kursami ############
 wyniki = [
     ["1:0", getCourse(match_probabilities["exact_10"])], ["2:0", getCourse(match_probabilities["exact_20"])], ["2:1", getCourse(match_probabilities["exact_21"])],
     ["3:0", getCourse(match_probabilities["exact_30"])], ["3:1", getCourse(match_probabilities["exact_31"])], ["3:2", getCourse(match_probabilities["exact_32"])],
@@ -928,7 +1206,6 @@ correct_scores = ""
 for row in table_data:
     for cell in row:
         wynik, kurs = cell
-        print(wynik)
         if wynik == match_score:
             correct_scores += f"""
             <div class="cell correct">
@@ -967,8 +1244,8 @@ odds_style = """
 
     .odds-group h3 {
         margin-top: 0;
-        margin-bottom: 10px;
-        font-size: 18px;
+        margin-bottom: 18px;
+        font-size: 24px;
         text-align: center;
         color: #111;
     }
@@ -976,13 +1253,13 @@ odds_style = """
     .table-container {
         display: flex;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 25px;
         align-items: center;
         justify-content: center;
     }
 
     .cell {
-        width: 160px;
+        width: calc(25% - 25px);
         height: 62px;
         background-color: #333333;
         border-radius: 12px;
@@ -1008,6 +1285,10 @@ odds_style = """
         font-weight: bold;
         text-align: right;
     }
+    .two-column .cell {
+    width: calc(45% - 25px); /* Two cells per row with gap adjustment */
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
+}
 </style>
 """
 odds_content = f"""<div class="odds-container">
@@ -1016,17 +1297,17 @@ odds_content = f"""<div class="odds-container">
         <h3>Wynik meczu</h3>
         <div class="table-container">
             <!-- Example cells for 1x2 odds -->
-            <div class="cell correct">
+            <div class="cell{" correct" if curr_match["home_goals"] > curr_match["away_goals"] else ""}">
                 <span class="result">1</span>
-                <span class="odds">2.50</span>
+                <span class="odds">{getCourse(match_probabilities["home_win"]):.2f}</span>
             </div>
-            <div class="cell">
+            <div class="cell{" correct" if curr_match["home_goals"] == curr_match["away_goals"] else ""}">
                 <span class="result">X</span>
-                <span class="odds">3.20</span>
+                <span class="odds">{getCourse(match_probabilities["draw"]):.2f}</span>
             </div>
-            <div class="cell">
+            <div class="cell{" correct" if curr_match["home_goals"] < curr_match["away_goals"] else ""}">
                 <span class="result">2</span>
-                <span class="odds">2.80</span>
+                <span class="odds">{getCourse(match_probabilities["away_win"]):.2f}</span>
             </div>
         </div>
     </div>
@@ -1034,51 +1315,145 @@ odds_content = f"""<div class="odds-container">
     <!-- No Draw Odds Group -->
     <div class="odds-group" style="background-color: #d1e7dd;">
         <h3>Mecz bez remisu</h3>
-        <div class="table-container">
+        <div class="table-container two-column">
             <!-- Example cells for no draw odds -->
-            <div class="cell correct">
+            <div class="cell{" correct" if curr_match["home_goals"] > curr_match["away_goals"] else ""}">
                 <span class="result">1</span>
-                <span class="odds">1.90</span>
+                <span class="odds">{getCourse(match_probabilities["no_draw_home_win"]):.2f}</span>
             </div>
-            <div class="cell">
+            <div class="cell{" correct" if curr_match["home_goals"] < curr_match["away_goals"] else ""}">
                 <span class="result">2</span>
-                <span class="odds">1.95</span>
+                <span class="odds">{getCourse(match_probabilities["no_draw_away_win"]):.2f}</span>
             </div>
         </div>
     </div>
 
     <!-- Double Chance Odds Group -->
     <div class="odds-group" style="background-color: #d1e7dd;">
-        <h3>Double Chance</h3>
+        <h3>Podwójna szansa</h3>
         <div class="table-container">
             <!-- Example cells for double chance odds -->
-            <div class="cell">
+            <div class="cell{" correct" if curr_match["home_goals"] >= curr_match["away_goals"] else ""}">
                 <span class="result">1X</span>
-                <span class="odds">1.35</span>
+                <span class="odds">{getCourse(match_probabilities["1x"]):.2f}</span>
             </div>
-            <div class="cell">
-                <span class="result">12</span>
-                <span class="odds">1.50</span>
-            </div>
-            <div class="cell correct">
+            <div class="cell{" correct" if curr_match["home_goals"] <= curr_match["away_goals"] else ""}">
                 <span class="result">X2</span>
-                <span class="odds">1.40</span>
+                <span class="odds">{getCourse(match_probabilities["x2"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] != curr_match["away_goals"] else ""}">
+                <span class="result">12</span>
+                <span class="odds">{getCourse(match_probabilities["12"]):.2f}</span>
             </div>
         </div>
     </div>
 
-    <!-- Over/Under Goals Odds Group -->
     <div class="odds-group" style="background-color: #d1e7dd;">
-        <h3>Podwójna szansa</h3>
-        <div class="table-container">
-            <!-- Example cells for over/under goals odds -->
-            <div class="cell correct">
-                <span class="result">Over 2.5</span>
-                <span class="odds">1.80</span>
+        <h3>Obie drużyny strzelą bramkę</h3>
+        <div class="table-container two-column">
+            <div class="cell{" correct" if curr_match["home_goals"] > 0 and curr_match["away_goals"] > 0 else ""}">
+                <span class="result">tak</span>
+                <span class="odds">{getCourse(match_probabilities["btts"]):.2f}</span>
             </div>
-            <div class="cell">
-                <span class="result">Under 2.5</span>
-                <span class="odds">2.00</span>
+            <div class="cell{" correct" if curr_match["home_goals"] < 1 or curr_match["away_goals"] < 1 else ""}">
+                <span class="result">nie</span>
+                <span class="odds">{getCourse(match_probabilities["no_btts"]):.2f}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="odds-group" style="background-color: #d1e7dd;">
+        <h3>Liczba bramek w meczu</h3>
+        <div class="table-container two-column">
+            <div class="cell{" correct" if curr_match["home_goals"] + curr_match["away_goals"] > 0.5 else ""}">
+                <span class="result">+0.5</span>
+                <span class="odds">{getCourse(match_probabilities["over05"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] + curr_match["away_goals"] < 0.5 else ""}">
+                <span class="result">-0.5</span>
+                <span class="odds">{getCourse(match_probabilities["under05"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] + curr_match["away_goals"] > 1.5 else ""}">
+                <span class="result">+1.5</span>
+                <span class="odds">{getCourse(match_probabilities["over15"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] + curr_match["away_goals"] < 1.5 else ""}">
+                <span class="result">-1.5</span>
+                <span class="odds">{getCourse(match_probabilities["under15"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] + curr_match["away_goals"] > 2.5 else ""}">
+                <span class="result">+2.5</span>
+                <span class="odds">{getCourse(match_probabilities["over25"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] + curr_match["away_goals"] < 2.5 else ""}">
+                <span class="result">-2.5</span>
+                <span class="odds">{getCourse(match_probabilities["under25"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] + curr_match["away_goals"] > 3.5 else ""}">
+                <span class="result">+3.5</span>
+                <span class="odds">{getCourse(match_probabilities["over35"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] + curr_match["away_goals"] < 3.5 else ""}">
+                <span class="result">-3.5</span>
+                <span class="odds">{getCourse(match_probabilities["under35"]):.2f}</span>
+            </div>
+        </div>
+    </div>
+    <div class="odds-group" style="background-color: #d1e7dd;">
+        <h3>Liczba bramek {home_team}</h3>
+        <div class="table-container two-column">
+            <div class="cell{" correct" if curr_match["home_goals"] > 0.5 else ""}">
+                <span class="result">+0.5</span>
+                <span class="odds">{getCourse(match_probabilities["home_over05"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] < 0.5 else ""}">
+                <span class="result">-0.5</span>
+                <span class="odds">{getCourse(match_probabilities["home_under05"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] > 1.5 else ""}">
+                <span class="result">+1.5</span>
+                <span class="odds">{getCourse(match_probabilities["home_over15"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] < 1.5 else ""}">
+                <span class="result">-1.5</span>
+                <span class="odds">{getCourse(match_probabilities["home_under15"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] > 2.5 else ""}">
+                <span class="result">+2.5</span>
+                <span class="odds">{getCourse(match_probabilities["home_over25"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["home_goals"] < 2.5 else ""}">
+                <span class="result">-2.5</span>
+                <span class="odds">{getCourse(match_probabilities["home_under25"]):.2f}</span>
+            </div>
+        </div>
+    </div>
+    <div class="odds-group" style="background-color: #d1e7dd;">
+        <h3>Liczba bramek {away_team}</h3>
+        <div class="table-container two-column">
+            <div class="cell{" correct" if curr_match["away_goals"] > 0.5 else ""}">
+                <span class="result">+0.5</span>
+                <span class="odds">{getCourse(match_probabilities["away_over05"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["away_goals"] < 0.5 else ""}">
+                <span class="result">-0.5</span>
+                <span class="odds">{getCourse(match_probabilities["away_under05"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["away_goals"] > 1.5 else ""}">
+                <span class="result">+1.5</span>
+                <span class="odds">{getCourse(match_probabilities["away_over15"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["away_goals"] < 1.5 else ""}">
+                <span class="result">-1.5</span>
+                <span class="odds">{getCourse(match_probabilities["away_under15"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["away_goals"] > 2.5 else ""}">
+                <span class="result">+2.5</span>
+                <span class="odds">{getCourse(match_probabilities["away_over25"]):.2f}</span>
+            </div>
+            <div class="cell{" correct" if curr_match["away_goals"] < 2.5 else ""}">
+                <span class="result">-2.5</span>
+                <span class="odds">{getCourse(match_probabilities["away_under25"]):.2f}</span>
             </div>
         </div>
     </div>
@@ -1094,6 +1469,6 @@ odds_content = f"""<div class="odds-container">
 odds_html = odds_style + odds_content
 # Wyświetlenie tabeli w Streamlit
 with tab4:
-    col1, col2, col3 = st.columns([1,4,1])
+    col1, col2, col3 = st.columns([1,6,1])
     with col2:
-        st.components.v1.html(odds_html, height=1200)
+        st.components.v1.html(odds_html, height=2580)
