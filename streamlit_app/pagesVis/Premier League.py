@@ -9,6 +9,7 @@ import json
 import torch.nn.functional as F
 import joblib
 import torch.nn as nn
+from urllib.parse import quote
 
 # Chowanie statystyk po zmianie filtrów
 def restartStats():
@@ -303,8 +304,9 @@ def generate_html_match_list(df):
 
     html_template += """<div class="container">"""
 
+
     match_template = """
-    <a href="/Statystyki_Premier_League?home_team={home_team}&date={original_date}" target=_self>
+    <a href="/Statystyki_Premier_League?home_team={encoded_home_team}&date={original_date}&league=pl" target=_self>
     <div class="match">
         <div class="time-date">{date}  {time}</div>
         <div class="teams">
@@ -361,6 +363,7 @@ def generate_html_match_list(df):
                 original_date = row["date"],
                 time=row["time"],
                 home_team=row["home_team"],
+                encoded_home_team = quote(row["home_team"]),
                 away_team=row["away_team"],
                 home_goals=row["home_goals"],
                 away_goals=row["away_goals"],

@@ -517,10 +517,18 @@ def predict_outcome(input_features, model):
         return prediction.squeeze()[0].item(), prediction.squeeze()[1].item(), prediction.squeeze()[2].item()
 
 def load_data():
-    # players = st.session_state["playersPL"].copy()
-    # matches = st.session_state["dfPL"].copy()
-    # odds = st.session_state["oddsPL"].copy()
+    home_team = st.query_params["home_team"]
+    date = pd.to_datetime(st.query_params["date"])
+    league = st.query_params["league"]
     odds = pd.read_csv("../odds.csv")
+    standings = pd.read_csv("../standings_with_new.csv")
+    standings['date']=pd.to_datetime(standings['date'])
+    standings['goal_difference'] = standings['goal_difference'].astype(int)
+    standings['goals'] = standings['goals'].astype(int)
+    standings['goals_conceded'] = standings['goals_conceded'].astype(int)
+    standings = standings[standings["league"] == league]
+    current_standings_date = standings[standings['date'] < date]["date"].tail(1).iloc[0]
+    standings = standings[standings["date"] == current_standings_date]
     players = pd.read_csv("../players_pl.csv")
     players_new = pd.read_csv("../new_players.csv")
     players = pd.concat([players, players_new], ignore_index=True)
@@ -528,9 +536,7 @@ def load_data():
     matches = pd.read_csv("../final_prepared_data_with_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
     players = players.rename(columns={"position": "position_x"})
-    home_team = st.query_params["home_team"]
-    date = pd.to_datetime(st.query_params["date"])
-    return players, matches, odds, home_team, date
+    return players, matches, odds, home_team, date, standings
 
 def getCourse(prob):
     return round(1 / prob, 2)
@@ -554,7 +560,114 @@ def get_stat(df, team, stat, other_team = False, sum = False):
         df["new_date"] = df["date"].apply(lambda x: str(x)[5:7]+"."+str(x)[8:10])
         return df[[stat, "new_date"]]
 
-players, matches, odds, home_team, date = load_data()
+def generate_html_table(teams_stats):
+    html_template = """
+        <style>
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                text-align: center;
+                background-color: #f9f9f9;
+                color:black;
+                border: 0px solid rgba(34, 34, 38, 0.25);
+                font: Arial;
+            th, td {{
+                padding: 5px;
+                border: 0px solid rgba(34, 34, 38, 0.25);
+                text-align: center;
+                width: 1%;
+            }}
+            th {{
+                background-color: #f9f9f9;
+                color: rgba(34, 34, 38, 0.45);
+                font-weight: bold;
+            }}
+            tr:hover {{
+                background-color: #e6e6e6;
+            }}
+            td {{
+                line-height: 25px;
+                padding-top: 2px;
+                padding-bottom: 2px;
+            }}
+            th:last-child, td:last-child {{
+                font-weight: bold;
+            }}
+            th:nth-child(2), td:nth-child(2) {{
+                width: 15%;
+                text-align: left;
+            }}
+            th:nth-child(1), td:nth-child(1) {{
+                width: 0%;
+            }}
+            .highlight-green td:nth-child(1) span {{
+                display: inline-block;
+                width: 25px;
+                height: 25px;
+                line-height: 25px;
+                border-radius: 50%;
+                background-color: #26943b;
+                color: white;
+                font-weight: bold;
+            }}
+            .highlight-red td:nth-child(1) span {{
+                display: inline-block;
+                width: 25px;
+                height: 25px;
+                line-height: 25px;
+                border-radius: 50%;
+                background-color: #c1262d;
+                color: white;
+                font-weight: bold;
+            }}
+        </style>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Zespół</th>
+                    <th>M</th>
+                    <th>W</th>
+                    <th>R</th>
+                    <th>P</th>
+                    <th>+/-</th>
+                    <th>+</th>
+                    <th>-</th>
+                    <th>Pkt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows}
+            </tbody>
+        </table>
+    </body>
+    </html>
+    """
+
+    rows = ""
+    for team in teams_stats:
+        row_class = (
+            "highlight-green" if team["highlight"] == "green" else "highlight-red" if team["highlight"] == "red" else ""
+        )
+        rows += f"""
+        <tr class="{row_class}">
+            <td><span>{team["position"]}</span></td>
+            <td>{team["name"]}</td>
+            <td>{team["played"]}</td>
+            <td>{team["wins"]}</td>
+            <td>{team["draws"]}</td>
+            <td>{team["losses"]}</td>
+            <td>{team["diff"]}</td>
+            <td>{team["goals_scored"]}</td>
+            <td>{team["goals_conceded"]}</td>
+            <td>{team["points"]}</td>
+        </tr>
+        """
+    return html_template.format(rows=rows)
+
+
+players, matches, odds, home_team, date, standings = load_data()
+print(home_team)
 curr_match = matches[(matches["date"] == date) & (matches["home_team"] == home_team)].iloc[0]
 matches2 = matches.copy()
 
@@ -923,20 +1036,60 @@ with tab5:
 
 
 ############ Zakładka z informacjami ############
-import streamlit as st
+selected_columns_standings = ['team', 'matches_played', 'wins', 'draws', 'defeats', 'goal_difference', 'goals', 'goals_conceded', 'points']
+table = standings[selected_columns_standings]
+table = table.sort_values(["points", "goal_difference", "goals"], ascending=False)
+table['place'] = range(1, len(table) + 1)
+table = table.set_index('place')
+standings_data = []
+for i, row in table.iterrows():
+    if row["team"] == home_team or row["team"] == away_team:
+        team_stats = {}
+        team_stats["position"] = i
+        team_stats["highlight"] = ""
+        if i<5:
+            team_stats["highlight"] = "green"
+        if i>17:
+            team_stats["highlight"] = "red"
+        team_stats["name"] = row['team']
+        team_stats["played"] = row['matches_played']
+        team_stats["wins"] = row['wins']
+        team_stats["draws"] = row['draws']
+        team_stats["losses"] = row['defeats']
+        team_stats["diff"] = row['goal_difference']
+        if team_stats["diff"] > 0:
+            team_stats["diff"] = "+" + str(row['goal_difference'])
+        team_stats["goals_scored"] = row['goals']
+        team_stats["goals_conceded"] = row['goals_conceded']
+        team_stats["points"] = row['points']
+        standings_data.append(team_stats)
 
-# Data to dynamically fill the tab
-data = {
-    "date_time": "31/08/2024 • 16:00",
-    "competition": "Football, England, Premier League, Round 3",
-    "attendance": 16955,
-    "referee_name": "Josh Smith",
-    "referee_country": "England",
-    "avg_red_cards": 0.14,
-    "avg_yellow_cards": 3.88,
-}
+html_table = generate_html_table(standings_data)
+html_table_final = """
+<style>
+    .tab {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        width: 90%;
+        padding: 16px;
+        background-color: #f9f9f9;
+        margin: auto;
+    }
+    .tab_title {
+        font-size: 22px;
+        font-weight: bold;
+        color: #333;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+</style> """ + f"""
+<div class="tab">
+<div class="tab_title">Klasyfikacja przedmeczowa</div>
+{html_table}
+</div>
+"""
 
-# Styling
 st.markdown(
     """
     <style>
@@ -986,7 +1139,7 @@ tab_html = f"""
 <div class="tab">
     <div class="row">
         <div class="small_title">Data i godzina</div>
-        <div class="text">{data['date_time']}</div>
+        <div class="text">{curr_match['date'].date().strftime('%d.%m.%Y')} • {curr_match['time']}</div>
     </div>
     <div class="row">
         <div class="small_title">Rozgrywki</div>
@@ -1001,8 +1154,8 @@ tab_html = f"""
         <div class="text">{curr_match["City"]}, {curr_match["Country"]}</div>
     </div>
     <div class="row">
-        <div class="small_title">Frekwencja</div>
-        <div class="text">{int(curr_match["attendance_value"])}</div>
+        <div class="small_title">{"Frekwencja" if curr_match["attendance_value"] > 0 else "Pojemność"}</div>
+        <div class="text">{int(curr_match["attendance_value"]) if curr_match["attendance_value"] > 0 else curr_match["Capacity"]}</div>
     </div>
     <div class="row">
         <div class="small_title">Sędzia</div>
@@ -1023,9 +1176,10 @@ tab_html = f"""
 with tab1:
     col1, col2 = st.columns([1,1])
     with col1:
-        st.pyplot(fig21)
-        if (len(probabilities)>0):
-            st.pyplot(fig22)
+        st.components.v1.html(html_table_final, height=280)
+        # st.pyplot(fig21)
+        # if (len(probabilities)>0):
+        #     st.pyplot(fig22)
     with col2:
         st.markdown(tab_html, unsafe_allow_html=True)
 
@@ -1104,7 +1258,7 @@ odds_style = """
     }
 
     .cell {
-        width: 160px;
+        width: calc(25% - 25px);
         height: 62px;
         background-color: #333333;
         border-radius: 12px;
