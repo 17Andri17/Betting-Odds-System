@@ -497,6 +497,7 @@ def predict_outcome(input_features, model):
         prediction = model(input_tensor)
         return prediction.squeeze()[0].item(), prediction.squeeze()[1].item(), prediction.squeeze()[2].item()
 
+@st.cache_data
 def load_data():
     # players = st.session_state["playersPL"].copy()
     # matches = st.session_state["dfPL"].copy()
@@ -509,9 +510,7 @@ def load_data():
     matches = pd.read_csv("../final_prepared_data_with_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
     players = players.rename(columns={"position": "position_x"})
-    home_team = st.query_params["home_team"]
-    date = pd.to_datetime(st.query_params["date"])
-    return players, matches, odds, home_team, date
+    return players, matches, odds
 
 def getCourse(prob):
     return round(1 / prob, 2)
@@ -535,7 +534,9 @@ def get_stat(df, team, stat, other_team = False, sum = False):
         df["new_date"] = df["date"].apply(lambda x: str(x)[5:7]+"."+str(x)[8:10])
         return df[[stat, "new_date"]]
 
-players, matches, odds, home_team, date = load_data()
+players, matches, odds = load_data()
+home_team = st.query_params["home_team"]
+date = pd.to_datetime(st.query_params["date"])
 curr_match = matches[(matches["date"] == date) & (matches["home_team"] == home_team)].iloc[0]
 matches2 = matches.copy()
 

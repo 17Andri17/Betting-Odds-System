@@ -488,7 +488,7 @@ with col2:
 filtr1, filtr2 = st.columns(2)
 
 with filtr1:
-    team_filter = st.multiselect("Wybierz drużynę", options = sorted(df_filtered['home_team'].unique()), key="PLteam_filter")
+    team_filter = st.multiselect("Wybierz drużynę", options = sorted(df_filtered[df_filtered['season'] == season_filter_matches]['home_team'].unique()), key="PLteam_filter")
 # with filtr2:
 #     number_of_matches = st.slider("Wybierz liczbę wyświetlanych meczów", min_value=10, max_value=100, step=5, value=st.session_state["PLnumber_of_matches"], key="PLnumber_of_matches")
 
