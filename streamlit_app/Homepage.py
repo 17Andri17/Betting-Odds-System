@@ -73,8 +73,8 @@ ligue_1_stats = st.Page(
 )
 
 model_page = st.Page(
-    "pagesVis/Stwórz własny model.py",
-    title="Stwórz własny model",
+    "pagesVis/Your model.py",
+    title="Your model",
     icon="📊",
 )
 
@@ -131,6 +131,6 @@ with st.sidebar:
     st.page_link("pagesVis/Ligue 1.py", label="Ligue 1", icon="⚽")
     st.page_link("pagesVis/Premier League.py", label="Premier League", icon="⚽")
     st.page_link("pagesVis/Serie A.py", label="Serie A", icon="⚽")
-    st.page_link("pagesVis/Stwórz własny model.py", label="Stwórz własny model", icon="📊")
+    st.page_link("pagesVis/Your model.py", label="Stwórz własny model", icon="📊")
 
 pg.run()
