@@ -641,8 +641,6 @@ def generate_html_table(teams_stats):
                 {rows}
             </tbody>
         </table>
-    </body>
-    </html>
     """
 
     rows = ""
@@ -755,9 +753,40 @@ all_features = filtered_matches.iloc[0]
 match_probabilities = get_probabilities(all_features)
 
 
-st.markdown(f"""
-                <p style='text-align: center; font-size: 40px;'>{home_team}  {int(home_goals)} - {int(away_goals)}  {away_team}</p>
-                """, unsafe_allow_html=True)
+score_html = """
+<style>
+    .scoreboard {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            padding: 0px;
+            margin-bottom: 0px;
+        }
+        .team {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 0 10px;
+            color: #343a40;
+        }
+        .score {
+            font-size: 42px;
+            font-weight: bold;
+            margin: 0 20px;
+            color: #333;
+        }
+        .greyish {
+            color: #999;
+        }
+    </style>""" + f"""
+    <div class="scoreboard">
+        <div class="team">{home_team}</div>
+        <div class="score"><span class="{"greyish" if home_goals <= away_goals else ""}">{home_goals} </span> <span class="greyish">-</span> <span class="{"greyish" if home_goals >= away_goals else ""}">{away_goals}</span></div>
+        <div class="team">{away_team}</div>
+    </div>
+"""
+
+st.components.v1.html(score_html, height=50)
 
 
 
@@ -1095,14 +1124,21 @@ for i, row in table.iterrows():
 
 html_table = generate_html_table(standings_data)
 html_table_final = """
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap" rel="stylesheet">
 <style>
+    body {
+        font-family: "Source Sans Pro", sans-serif;
+        margin: 0;
+    }
     .tab {
+        box-sizing: border-box;
         border: 1px solid #ddd;
         border-radius: 8px;
-        width: 90%;
-        padding: 16px;
+        width: 95%;
+        padding: 18px 14px 16px 14px;
         background-color: #f9f9f9;
         margin: auto;
+        margin-top: 18px;
     }
     .tab_title {
         font-size: 22px;
@@ -1122,10 +1158,13 @@ html_table_final = """
 st.markdown(
     """
     <style>
+    .stAppHeader {
+    display: none;
+    }
     .tab {
         border: 1px solid #ddd;
         border-radius: 8px;
-        width: 400px;
+        width: 95%;
         padding: 16px;
         background-color: #f9f9f9;
         margin: auto;
@@ -1163,9 +1202,8 @@ ref_df["sum_red"] = ref_df["home_cards_red"] + ref_df["away_cards_red"]
 yellow_avg = ref_df["sum_yellow"].mean()
 red_avg = ref_df["sum_red"].mean()
 
-# HTML structure for the tab
 tab_html = f"""
-<div class="tab">
+<div class="tab" style="padding-top:13px; padding-bottom: 8px">
     <div class="row">
         <div class="small_title">Data i godzina</div>
         <div class="text">{curr_match['date'].date().strftime('%d.%m.%Y')} • {curr_match['time']}</div>
@@ -1180,7 +1218,7 @@ tab_html = f"""
     </div>
     <div class="row">
         <div class="small_title">Lokalizacja</div>
-        <div class="text">{curr_match["City"]}, {curr_match["Country"]}</div>
+        <div class="text">{curr_match["City"]}</div>
     </div>
     <div class="row">
         <div class="small_title">{"Frekwencja" if curr_match["attendance_value"] > 0 else "Pojemność"}</div>
@@ -1200,63 +1238,251 @@ tab_html = f"""
 </div>
 """
 
+temperature=curr_match["weather_temperature"]
+precipitation=curr_match["weather_precipitation"]
+wind=curr_match["weather_wind"]
+humidity=curr_match["weather_humidity"]
+cloud_cover=curr_match["weather_cloud_cover"]
+if curr_match["weather_cloud_cover"] < 30 and curr_match["weather_precipitation"] < 1:
+    icon = "☀️"
+    weather_type = "Słonecznie"
+elif curr_match["weather_cloud_cover"] < 60 and curr_match["weather_precipitation"] < 1:
+    icon = "🌥️"
+    weather_type = "Częściowo pochmurnie"
+elif curr_match["weather_precipitation"] > 1:
+    icon = "🌧️" 
+    weather_type = "Deszcz"
+else:
+    icon = "☁️"
+    weather_type = "Pochmurnie"
+weather_style = """
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    body {
+        margin: 0;
+        font-family: "Source Sans Pro", sans-serif;
+    }
+    .tab {
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        width: 95%;
+        padding: 0px 16px 10px 16px;
+        background-color: #f9f9f9;
+        margin: auto;
+    }
+  .weather-card {
+    font-family: "Source Sans Pro", sans-serif;
+    width: 100%;
+    text-align: center;
+    vertical-align: center;
+  }
 
+  .weather-icon {
+    font-size: 68px;
+  }
+
+  .temperature {
+    font-size: 52px;
+    font-weight: bold;
+    color: #333;
+    margin-left: 10px;
+  }
+
+  .description {
+    font-size: 22px;
+    font-weight: bold;
+    color: #666;
+    margin: 5px 0;
+  }
+
+  .details {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    font-size: 14px;
+    color: #888;
+  }
+
+  .detail span:first-child {
+    display: block;
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 5px;
+  }
+</style> 
+""" + f"""
+<div class="tab">
+  <div class="weather-card">
+    <div class="cent">
+        <span class="weather-icon">{icon}</span>
+        <span class="temperature">{temperature}°C</span>
+    </div>
+
+    <div class="description">{weather_type}</div>
+    <div class="details">
+      <div class="detail">
+        <span>Opady</span>
+        <span>{precipitation} mm</span>
+      </div>
+      <div class="detail">
+        <span>Wilgotność</span>
+        <span>{humidity} %</span>
+      </div>
+      <div class="detail">
+        <span>Wiatr</span>
+        <span>{wind} km/h</span>
+      </div>
+    </div>
+  </div>
+</div>
+"""
+
+
+h2h_matches_same = matches[(matches["home_team"] == home_team) & (matches["away_team"] == away_team) & (matches["date"] < date)]
+h2h_matches_opposite = matches[(matches["home_team"] == away_team) & (matches["away_team"] == home_team) & (matches["date"] < date)]
+home_team_home_wins = len(h2h_matches_same[h2h_matches_same["home_goals"] > h2h_matches_same["away_goals"]])
+away_team_away_wins = len(h2h_matches_same[h2h_matches_same["home_goals"] < h2h_matches_same["away_goals"]])
+same_draws = len(h2h_matches_same[h2h_matches_same["home_goals"] < h2h_matches_same["away_goals"]])
+away_team_home_wins = len(h2h_matches_opposite[h2h_matches_opposite["home_goals"] > h2h_matches_opposite["away_goals"]])
+home_team_away_wins = len(h2h_matches_opposite[h2h_matches_opposite["home_goals"] < h2h_matches_opposite["away_goals"]])
+opposite_draws = len(h2h_matches_opposite[h2h_matches_opposite["home_goals"] < h2h_matches_opposite["away_goals"]])
+team_1_wins = home_team_away_wins + home_team_home_wins
+team_2_wins = away_team_away_wins + away_team_home_wins
+teams_draws = same_draws + opposite_draws
+
+# Create the H2H table in HTML
+html_h2h = f"""
+<style>
+.tab_title {"""{
+        font-size: 22px;
+        font-weight: bold;
+        color: #333;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 12px;
+        }"""
+    }
+</style>
+<div class="tab" style="margin-top: -6px;">
+    <div class="tab_title">Mecze bezpośrednie</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+        <div style="text-align: left; flex: 4; padding-left: 6px;">
+            <span style="font-weight: bold; color: #0bb32a; font-size: 1.4em;">{team_1_wins}</span>
+            <br />
+            <span style="font-weight: bold; color: #333; font-size: 1.1em;">{home_team}</span>
+        </div>
+        <div style="text-align: center; flex: 1;">
+            <span style="font-weight: bold; color: #999; font-size: 1.4em;">{teams_draws}</span>
+            <br />
+            <span style="font-size: 0.9em; visibility: hidden;">R</span>
+        </div>
+        <div style="text-align: right; flex: 4; padding-right: 6px;">
+            <span style="font-weight: bold; color: #374df5; font-size: 1.4em;">{team_2_wins}</span>
+            <br />
+            <span style="font-weight: bold; color: #333; font-size: 1.1em;">{away_team}</span>
+        </div>
+    </div>
+</div>
+"""
+
+home_last_matches = ["Z", "Z", "P", "R", "P", ""]
+away_last_matches = ["P", "Z", "R", "Z", "R", ""]
+
+form_html = """
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    body {
+        font-family: "Source Sans Pro", sans-serif;
+        margin: 0;
+    }
+    .tab {
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        width: 95%;
+        padding: 16px;
+        background-color: #f9f9f9;
+        margin: auto;
+        margin-top: 16px;
+    }
+    .tab_title {
+        font-size: 22px;
+        font-weight: bold;
+        color: #333;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+
+    .team_row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0 0;
+        }
+
+    .team_name {
+            font-size: 1.2em;
+            font-weight: bold;
+            flex: 1;
+            text-align: center;
+            margin-right: 1px;
+        }
+    
+    .form_tab {
+            display: flex;
+            justify-content: center;
+            margin: 10px auto;
+            flex: 2;
+        }
+        .match {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 2px;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: white;
+            border-radius: 5px;
+        }
+        .win { background-color: #28a745; } /* Green for Wins */
+        .loss { background-color: #dc3545; } /* Red for Losses */
+        .draw { background-color: #6c757d; } /* Gray for Draws */
+        .empty { background-color: #e9ecef; } /* Light Gray for Empty Matches */
+    </style> """ + f"""
+    <div class="tab">
+        <div class="tab_title">Ostatnie wyniki</div>
+        <div class="team_row">
+            <div class="team_name">{home_team}</div>
+            <div class="form_tab">
+                {"".join([f'<div class="match {"win" if m == "Z" else "loss" if m == "P" else "draw" if m == "R" else "empty"}">{m}</div>' for m in home_last_matches])}
+            </div>
+        </div>
+        <div class="team_row">
+            <div class="team_name">{away_team}</div>
+            <div class="form_tab">
+                {"".join([f'<div class="match {"win" if m == "Z" else "loss" if m == "P" else "draw" if m == "R" else "empty"}">{m}</div>' for m in away_last_matches])}
+            </div>
+        </div>
+    </div>
+"""
 
 with tab1:
     col1, col2 = st.columns([1,1])
     with col1:
-        st.components.v1.html(html_table_final, height=280)
+        st.components.v1.html(weather_style, height=190)
+        st.markdown(html_h2h, unsafe_allow_html=True)
+        st.components.v1.html(form_html, height=240)
         # st.pyplot(fig21)
         # if (len(probabilities)>0):
         #     st.pyplot(fig22)
     with col2:
         st.markdown(tab_html, unsafe_allow_html=True)
+        st.components.v1.html(html_table_final, height=200)
     
-    col1, col2, col3, col4, col5, col6 = st.columns([1, 1, 1, 1, 1, 1])
-    temperature=curr_match["weather_temperature"]
-    precipitation=curr_match["weather_precipitation"]
-    wind=curr_match["weather_wind"]
-    humidity=curr_match["weather_humidity"]
-    cloud_cover=curr_match["weather_cloud_cover"]
-    if curr_match["weather_cloud_cover"] < 30 and curr_match["weather_precipitation"] < 1:
-        icon = "☀️"
-    elif curr_match["weather_cloud_cover"] < 60 and curr_match["weather_precipitation"] < 1:
-        icon = "🌥️"
-    elif curr_match["weather_precipitation"] > 1:
-        icon = "🌧️" 
-    else:
-        icon = "☁️"
-    weather_style = f"""
-    <div style="display: grid; grid-template-columns: repeat(6, 1fr); text-align: center;">
-        <div style="grid-column: span 6; text-align: center; font-size: 35px; font-weight: bold; padding-bottom: 15px; padding-top: 15px">
-            Pogoda:
-        </div>
-        <div>
-            <div style="font-size: 60px; ">{icon}</div>
-        </div>
-        <div>
-            <div style="font-size: 25px; font-weight: bold;">Temperatura:</div>
-            <div style="font-size: 25px;">{temperature}°C</div>
-        </div>
-        <div>
-            <div style="font-size: 25px; font-weight: bold;">Opady:</div>
-            <div style="font-size: 25px;">{precipitation}mm</div>
-        </div>
-        <div>
-            <div style="font-size: 25px; font-weight: bold;">Wiatr:</div>
-            <div style="font-size: 25px;">{wind}km/h</div>
-        </div>
-        <div>
-            <div style="font-size: 25px; font-weight: bold;">Wilgotność:</div>
-            <div style="font-size: 25px;">{humidity}%</div>
-        </div>
-        <div>
-            <div style="font-size: 25px; font-weight: bold;">Zachmurzenie:</div>
-            <div style="font-size: 25px;">{cloud_cover}%</div>
-        </div>
-    </div>
-    """
-    st.markdown(weather_style, unsafe_allow_html=True)
 
 ############ Zakładka z kursami ############
 wyniki = [
