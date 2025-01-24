@@ -266,7 +266,7 @@ def generate_html_match_list(df):
             }
             .cell {
                 display: inline-block;
-                width: 18%;
+                width: 20%;
                 height: 40px;
                 background-color: white;
                 border-radius: 6px;
@@ -351,14 +351,21 @@ def generate_html_match_list(df):
             home_course = ""
             draw_course = ""
             away_course = ""
-            if row["home_goals"] > row["away_goals"]:
-                home_class = " winner"
-                home_course = " win"
-            elif row["home_goals"] < row["away_goals"]:
-                away_class = " winner"
-                away_course = " win"
+            if row["new"]:
+                row["home_goals"] = "-"
+                row["away_goals"] = "-"
             else:
-                draw_course = " win"
+                row["home_goals"] = int(row["home_goals"])
+                row["away_goals"] = int(row["away_goals"])
+                if row["home_goals"] > row["away_goals"]:
+                    home_class = " winner"
+                    home_course = " win"
+                elif row["home_goals"] < row["away_goals"]:
+                    away_class = " winner"
+                    away_course = " win"
+                else:
+                    draw_course = " win"
+
             matches_html += match_template.format(
                 date=row["date"][-2:]+"."+row["date"][5:7],
                 original_date = row["date"],
@@ -409,8 +416,6 @@ def loadData():
     df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
     df["formation_away"] = df["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
     df["round"] = df["round"].astype(int)
-    df["home_goals"] = df["home_goals"].astype(int)
-    df["away_goals"] = df["away_goals"].astype(int)
     df = df.sort_values("round")
     dfPLNew = df[df["league"] == "pl"]
 
@@ -427,6 +432,7 @@ def loadData():
 df, df_new, standings = loadData()
 df_filtered=df.copy()
 standings_filtered=standings.copy()
+df_filtered_new = df_new.copy()
 
 # if "PLseason_filter" not in st.session_state:
 #     st.session_state["PLseason_filter"] = []
@@ -517,19 +523,36 @@ team_filter2=team_filter
 
 if team_filter==[]:
     team_filter2=df['home_team'].unique()
-df_filtered=df[(pd.to_datetime(df['date'])<=date_standings)
-            & (df['season'] == season_filter_matches)
-            & ((df['home_team'].isin(team_filter2))
-                | (df['away_team'].isin(team_filter2)))]
+df_filtered=df_filtered[(pd.to_datetime(df['date'])<=date_standings)
+            & (df_filtered['season'] == season_filter_matches)
+            & ((df_filtered['home_team'].isin(team_filter2))
+                | (df_filtered['away_team'].isin(team_filter2)))]
 df_filtered.sort_values(by=["round", "date", "time"], ascending=False, inplace=True)
 
+
+df_filtered_new=df_filtered_new[(df_filtered_new['season'] == season_filter_matches)
+            & ((df_filtered_new['home_team'].isin(team_filter2))
+                | (df_filtered_new['away_team'].isin(team_filter2)))]
+df_filtered_new.sort_values(by=["round", "date", "time"], ascending=False, inplace=True)
+
 # Wypisywanie danych
-records_to_show = df_filtered.head(50)
+records_to_show = df_filtered[df_filtered["round"] >= max(df_filtered["round"])-1]
+if len(df_filtered_new["round"])>0:
+    new_records_to_show = df_filtered_new[df_filtered_new["round"] <= min(df_filtered_new["round"])+1]
+else:
+    new_records_to_show = df_filtered_new
 col1, col2, col3 = st.columns([1,7,1])
+
+new_records_to_show["new"] = True
+records_to_show["new"] = False
+
+all_records_to_show = pd.concat([new_records_to_show, records_to_show])
+
+print(all_records_to_show)
 
 with col2:
     # st.components.v1.html(generate_html_match_list(records_to_show), height=4000)
-    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
+    st.markdown(generate_html_match_list(all_records_to_show), unsafe_allow_html=True)
 
 # for i in range(min(50, df_filtered['home_team'].count())):
 #     col1, col2, col3, col4, col5, col6 = st.columns([3,5,2,5,2,2])

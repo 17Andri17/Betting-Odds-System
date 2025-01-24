@@ -684,10 +684,10 @@ def generate_html_match_list(df, team, home, title):
         if row["home_goals"] > row["away_goals"]:
             home_class = " winner"
             if row["home_team"] == team:
-                if home == "home":
-                    win_draw = " zwin_green"
-                else:
+                if home == "away":
                     win_draw = " zwin_blue"
+                else:
+                    win_draw = " zwin_green"
             else:
                 if home == "homeaway":
                     win_draw = " zwin_blue"
@@ -702,10 +702,10 @@ def generate_html_match_list(df, team, home, title):
                 else:
                     win_draw = " plose_red"
             else:
-                if home == "home":
-                    win_draw = " zwin_green"
-                else:
+                if home == "away":
                     win_draw = " zwin_blue"
+                else:
+                    win_draw = " zwin_green"
         else:
             win_draw = " rdraw_grey"
         matches_html += match_template.format(
@@ -1172,8 +1172,9 @@ away_matches = matches[(matches["date"] < date) &
     ((matches["home_team"] == away_team) | (matches["away_team"] == away_team)) ]
 home_matches = home_matches.sort_values(by=["date", "time"], ascending=False)
 away_matches = away_matches.sort_values(by=["date", "time"], ascending=False)
-h2h = matches[((matches["home_team"] == home_team) & (matches["away_team"] == away_team)) |
-            ((matches["home_team"] == away_team) & (matches["away_team"] == home_team)) & (matches["date"] < curr_match["date"])]
+h2h = matches[(matches["date"] < date) & 
+              (((matches["home_team"] == home_team) & (matches["away_team"] == away_team)) |
+            ((matches["home_team"] == away_team) & (matches["away_team"] == home_team)))]
 h2h = h2h.sort_values(by=["date", "time"], ascending=False)
 
 
@@ -1241,59 +1242,59 @@ with tab5:
     }
     """
     st.html(f"<style>{css}</style>")
-    # with filtr1:
-    #     team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
-    # with filtr2:
-    #     stat_filter = st.selectbox("Wybierz statystykę", options=["Bramki w meczu", "Strzelone bramki", "Stracone bramki"], key="stat_filter")
+    with filtr1:
+        team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
+    with filtr2:
+        stat_filter = st.selectbox("Wybierz statystykę", options=["Bramki w meczu", "Strzelone bramki", "Stracone bramki"], key="stat_filter")
     
 
-    # team = team_filter
-    # stat_name = stat_filter
-    # n = 10
-    # last_matches = select_last_matches(matches, team, date, n)
-    # if stat_name == "Strzelone bramki":
-    #     stat = "goals"
-    #     stat_df = get_stat(last_matches, team, stat)
-    #     threshold = 1.5
-    # if stat_name == "Stracone bramki":
-    #     stat = "goals"
-    #     stat_df = get_stat(last_matches, team, stat, True)
-    #     threshold = 1.5
-    # if stat_name == "Bramki w meczu":
-    #     stat = "goals"
-    #     stat_df = get_stat(last_matches, team, stat, sum = True)
-    #     threshold = 2.5
+    team = team_filter
+    stat_name = stat_filter
+    n = 10
+    last_matches = select_last_matches(matches, team, date, n)
+    if stat_name == "Strzelone bramki":
+        stat = "goals"
+        stat_df = get_stat(last_matches, team, stat)
+        threshold = 1.5
+    if stat_name == "Stracone bramki":
+        stat = "goals"
+        stat_df = get_stat(last_matches, team, stat, True)
+        threshold = 1.5
+    if stat_name == "Bramki w meczu":
+        stat = "goals"
+        stat_df = get_stat(last_matches, team, stat, sum = True)
+        threshold = 2.5
 
-    # # Set colors: green if above threshold, red otherwise
-    # colors = ["green" if val > threshold else "red" for val in stat_df[stat]]
+    # Set colors: green if above threshold, red otherwise
+    colors = ["green" if val > threshold else "red" for val in stat_df[stat]]
 
-    # # Plot the bar chart
-    # fig3 = plt.figure(figsize=(10, 6))
-    # bars = plt.bar(stat_df["new_date"], stat_df[stat], color=colors)
+    # Plot the bar chart
+    fig3 = plt.figure(figsize=(10, 6))
+    bars = plt.bar(stat_df["new_date"], stat_df[stat], color=colors)
 
-    # # Add threshold line
-    # plt.axhline(y=threshold, color="gray", linestyle="--", label=f"Linia = {threshold}")
+    # Add threshold line
+    plt.axhline(y=threshold, color="gray", linestyle="--", label=f"Linia = {threshold}")
 
-    # # Add value labels on top of bars
-    # for bar in bars:
-    #     height = int(bar.get_height())
-    #     if height == 0:
-    #         plt.text(bar.get_x() + bar.get_width() / 2, height, str(height),
-    #             ha="center", va="bottom", fontsize=20)
-    #     else:
-    #         plt.text(bar.get_x() + bar.get_width() / 2, height-0.4, str(height),
-    #             ha="center", va="bottom", fontsize=20)
+    # Add value labels on top of bars
+    for bar in bars:
+        height = int(bar.get_height())
+        if height == 0:
+            plt.text(bar.get_x() + bar.get_width() / 2, height, str(height),
+                ha="center", va="bottom", fontsize=20)
+        else:
+            plt.text(bar.get_x() + bar.get_width() / 2, height-0.4, str(height),
+                ha="center", va="bottom", fontsize=20)
 
 
-    # plt.title(stat_name.capitalize() + " " + team + " w ostatnich " + str(n) + " meczach")
-    # plt.xlabel("Mecze")
-    # plt.ylabel(stat)
-    # plt.legend()
-    # plt.tight_layout()
+    plt.title(stat_name.capitalize() + " " + team + " w ostatnich " + str(n) + " meczach")
+    plt.xlabel("Mecze")
+    plt.ylabel(stat)
+    plt.legend()
+    plt.tight_layout()
 
-    # col1, col2 = st.columns([1,1])
-    # with col1:
-    #     st.write(fig3)
+    col1, col2 = st.columns([1,1])
+    with col1:
+        st.write(fig3)
     # with col2:
     #     st.write(fig3)
 
@@ -1551,10 +1552,10 @@ h2h_matches_same = matches[(matches["home_team"] == home_team) & (matches["away_
 h2h_matches_opposite = matches[(matches["home_team"] == away_team) & (matches["away_team"] == home_team) & (matches["date"] < date)]
 home_team_home_wins = len(h2h_matches_same[h2h_matches_same["home_goals"] > h2h_matches_same["away_goals"]])
 away_team_away_wins = len(h2h_matches_same[h2h_matches_same["home_goals"] < h2h_matches_same["away_goals"]])
-same_draws = len(h2h_matches_same[h2h_matches_same["home_goals"] < h2h_matches_same["away_goals"]])
+same_draws = len(h2h_matches_same[h2h_matches_same["home_goals"] == h2h_matches_same["away_goals"]])
 away_team_home_wins = len(h2h_matches_opposite[h2h_matches_opposite["home_goals"] > h2h_matches_opposite["away_goals"]])
 home_team_away_wins = len(h2h_matches_opposite[h2h_matches_opposite["home_goals"] < h2h_matches_opposite["away_goals"]])
-opposite_draws = len(h2h_matches_opposite[h2h_matches_opposite["home_goals"] < h2h_matches_opposite["away_goals"]])
+opposite_draws = len(h2h_matches_opposite[h2h_matches_opposite["home_goals"] == h2h_matches_opposite["away_goals"]])
 team_1_wins = home_team_away_wins + home_team_home_wins
 team_2_wins = away_team_away_wins + away_team_home_wins
 teams_draws = same_draws + opposite_draws
@@ -1593,8 +1594,39 @@ html_h2h = f"""
 </div>
 """
 
-home_last_matches = ["Z", "Z", "P", "R", "P", ""]
-away_last_matches = ["P", "Z", "R", "Z", "R", ""]
+home_last_matches = []
+away_last_matches = []
+
+for _, row in home_matches.head(5).iterrows():
+    if row["home_goals"] == row["away_goals"]:
+        home_last_matches.append("R")
+    elif row["home_team"] == home_team:
+        if row["home_goals"] > row["away_goals"]:
+            home_last_matches.append("Z")
+        else:
+            home_last_matches.append("P")
+    else:
+        if row["home_goals"] > row["away_goals"]:
+            home_last_matches.append("P")
+        else:
+            home_last_matches.append("Z")
+
+for _, row in away_matches.head(5).iterrows():
+    if row["home_goals"] == row["away_goals"]:
+        away_last_matches.append("R")
+    elif row["home_team"] == away_team:
+        if row["home_goals"] > row["away_goals"]:
+            away_last_matches.append("Z")
+        else:
+            away_last_matches.append("P")
+    else:
+        if row["home_goals"] > row["away_goals"]:
+            away_last_matches.append("P")
+        else:
+            away_last_matches.append("Z")
+
+home_last_matches.append("")
+away_last_matches.append("")
 
 form_html = """
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap" rel="stylesheet">
