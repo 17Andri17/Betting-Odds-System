@@ -731,11 +731,22 @@ def generate_html_match_list(df, team, home, title):
 
 @st.cache_data
 def load_data():
-    home_team = st.query_params["home_team"]
-    date = pd.to_datetime(st.query_params["date"])
-    league = st.query_params["league"]
     odds = pd.read_csv("../odds.csv")
     standings = pd.read_csv("../standings_with_new.csv")
+    
+    players = pd.read_csv("../players_pl.csv")
+    players_new = pd.read_csv("../new_players.csv")
+    players = pd.concat([players, players_new], ignore_index=True)
+    players["date"] = pd.to_datetime(players["date"])
+
+    matches = pd.read_csv("../final_prepared_data_with_weather_new.csv")
+    matches["date"] = pd.to_datetime(matches["date"])
+
+    players = players.rename(columns={"position": "position_x"})
+    return odds, standings, players, matches
+
+def get_processed_data(home_team, date, league):
+    odds, standings, players, matches = load_data()
     standings['date']=pd.to_datetime(standings['date'])
     standings['goal_difference'] = standings['goal_difference'].astype(int)
     standings['goals'] = standings['goals'].astype(int)
@@ -743,14 +754,7 @@ def load_data():
     standings = standings[standings["league"] == league]
     current_standings_date = standings[standings['date'] < date]["date"].tail(1).iloc[0]
     standings = standings[standings["date"] == current_standings_date]
-    players = pd.read_csv("../players_pl.csv")
-    players_new = pd.read_csv("../new_players.csv")
-    players = pd.concat([players, players_new], ignore_index=True)
-    players["date"] = pd.to_datetime(players["date"])
-    matches = pd.read_csv("../final_prepared_data_with_weather_new.csv")
-    matches["date"] = pd.to_datetime(matches["date"])
-    players = players.rename(columns={"position": "position_x"})
-    return players, matches, odds, home_team, date, standings
+    return odds, standings, players, matches
 
 def getCourse(prob):
     return round(1 / prob, 2)
@@ -877,8 +881,11 @@ def generate_html_table(teams_stats):
         """
     return html_template.format(rows=rows)
 
-
-players, matches, odds, home_team, date, standings = load_data()
+home_team = st.query_params["home_team"]
+date = pd.to_datetime(st.query_params["date"])
+league = st.query_params["league"]
+odds, standings, players, matches = get_processed_data(home_team, date, league)
+#players, matches, odds, home_team, date, standings = load_data()
 curr_match = matches[(matches["date"] == date) & (matches["home_team"] == home_team)].iloc[0]
 matches2 = matches.copy()
 
