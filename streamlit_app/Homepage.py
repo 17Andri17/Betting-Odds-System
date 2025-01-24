@@ -80,6 +80,17 @@ model_page = st.Page(
 
 pg = st.navigation(pages = [homepage, premier_league, bundesliga, seriea, ligue1, laliga, premier_league_stats, bundesliga_stats, serie_a_stats, la_liga_stats, ligue_1_stats, model_page], position="hidden")
 
+st.markdown(
+    """
+    <style>
+        section[data-testid="stSidebar"] {
+            width: 200px !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.sidebar.title("Wybierz stronę:")
 
 # if st.sidebar.button(

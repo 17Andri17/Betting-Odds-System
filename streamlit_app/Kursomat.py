@@ -108,6 +108,21 @@ def loadData():
     dfL1 = df[df["league"] == "l1"]
     dfSA = df[df["league"] == "sa"]
 
+    df = pd.read_csv("../new_matches_fbref.csv")
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
+    df["date"] = df["date"].astype(str)
+    df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
+    df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
+    df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
+    df["formation_away"] = df["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
+    df["round"] = df["round"].astype(int)
+    df = df.sort_values("round")
+    dfPLNew = df[df["league"] == "pl"]
+    dfBLNew = df[df["league"] == "bl"]
+    dfLLNew = df[df["league"] == "ll"]
+    dfL1New = df[df["league"] == "l1"]
+    dfSANew = df[df["league"] == "sa"]
+
     standings = pd.read_csv("../standings_with_new.csv")
     standings['date']=pd.to_datetime(standings['date'])
     standings['goal_difference'] = standings['goal_difference'].astype(int)
@@ -119,7 +134,7 @@ def loadData():
     standingsL1 = standings[standings["league"] == "l1"]
     standingsSA = standings[standings["league"] == "sa"]
 
-    return dfPL, dfLL, dfBL, dfL1, dfSA, standingsPL, standingsLL, standingsBL, standingsL1, standingsSA
+    return dfPL, dfLL, dfBL, dfL1, dfSA, standingsPL, standingsLL, standingsBL, standingsL1, standingsSA, dfPLNew, dfBLNew, dfLLNew, dfL1New, dfSANew
 
 def load_model(model_path):
     model = torch.load(model_path, map_location=torch.device('cpu'))
@@ -310,7 +325,7 @@ def generate_html_match_list(df):
             }
             .cell {
                 display: inline-block;
-                width: 18%;
+                width: 20%;
                 height: 40px;
                 background-color: white;
                 border-radius: 6px;
@@ -334,8 +349,9 @@ def generate_html_match_list(df):
                 text-align: right;
             }
             hr {
-            width: 100%;
-            color: #eee;
+                width: 100%;
+                color: #eee;
+                margin: 0;
             }
             a {
                 text-decoration: none;
@@ -394,14 +410,21 @@ def generate_html_match_list(df):
             home_course = ""
             draw_course = ""
             away_course = ""
-            if row["home_goals"] > row["away_goals"]:
-                home_class = " winner"
-                home_course = " win"
-            elif row["home_goals"] < row["away_goals"]:
-                away_class = " winner"
-                away_course = " win"
+            if row["new"]:
+                row["home_goals"] = "-"
+                row["away_goals"] = "-"
             else:
-                draw_course = " win"
+                row["home_goals"] = int(row["home_goals"])
+                row["away_goals"] = int(row["away_goals"])
+                if row["home_goals"] > row["away_goals"]:
+                    home_class = " winner"
+                    home_course = " win"
+                elif row["home_goals"] < row["away_goals"]:
+                    away_class = " winner"
+                    away_course = " win"
+                else:
+                    draw_course = " win"
+
             matches_html += match_template.format(
                 date=row["date"][-2:]+"."+row["date"][5:7],
                 original_date = row["date"],
@@ -509,20 +532,24 @@ def generate_league_table(standings, place, league):
     return html_table_final
 
 
-dfPL, dfLL, dfBL, dfL1, dfSA, standingsPL, standingsLL, standingsBL, standingsL1, standingsSA = loadData()
+dfPL, dfLL, dfBL, dfL1, dfSA, standingsPL, standingsLL, standingsBL, standingsL1, standingsSA, dfPLNew, dfBLNew, dfLLNew, dfL1New, dfSANew = loadData()
 
+st.markdown(
+    """
+    <a href="/Premier_League" target=_self style="text-decoration: none; color: black;">
+        <span style="font-size: 24px; font-weight: bold;">Premier League</span>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
 
+if len(dfPLNew["round"])>0:
+    records_to_show = dfPLNew.sort_values(by = ['date', 'time']).head(3)
+    records_to_show["new"] = True
+else:
+    records_to_show = dfPL.sort_values(by = ['date', 'time'], ascending=False).head(3)
+    records_to_show["new"] = False
 
-st.title("Witaj użytkowniku!")
-st.write("""Witaj na stronie, na której możesz sprawdzić kursy na mecze
-    piłkarskie z różnych lig europejskich, a także przeprowadzić analizę spotkań różnych drużyn.""")
-
-st.subheader("Wybierz ligę, dla której chcesz zobaczyć statystyki:")
-
-st.subheader("Premier League")
-
-dfPL = dfPL.sort_values(by = 'date', ascending=False)
-records_to_show = dfPL.head(3)
 html_table_final = generate_league_table(standingsPL, 16, "Premier League")
 
 col1, col2 = st.columns([3,2])
@@ -538,31 +565,23 @@ with col2:
     #st.markdown(tab_html, unsafe_allow_html=True)
     st.components.v1.html(html_table_final, height=460)
 
-st.subheader("La Liga")
+st.markdown(
+    """
+    <a href="/La_Liga" target=_self style="text-decoration: none; color: black;">
+        <span style="font-size: 24px; font-weight: bold;">La Liga</span>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
 
-dfLL = dfLL.sort_values(by = 'date', ascending=False)
-records_to_show = dfLL.head(3)
-html_table_final = generate_league_table(standingsLL, 16, "La Liga")
+if len(dfLLNew["round"])>0:
+    records_to_show = dfLLNew.sort_values(by = ['date', 'time']).head(3)
+    records_to_show["new"] = True
+else:
+    records_to_show = dfLL.sort_values(by = ['date', 'time'], ascending=False).head(3)
+    records_to_show["new"] = False
 
-col1, col2 = st.columns([3,2])
-with col1:
-    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
-    # st.components.v1.html(weather_style, height=190)
-    # st.markdown(html_h2h, unsafe_allow_html=True)
-    # st.components.v1.html(form_html, height=240)
-    # st.pyplot(fig21)
-    # if (len(probabilities)>0):
-    #     st.pyplot(fig22)
-with col2:
-    #st.markdown(tab_html, unsafe_allow_html=True)
-    st.components.v1.html(html_table_final, height=460)
-
-
-st.subheader("Ligue 1")
-
-dfL1 = dfL1.sort_values(by = 'date', ascending=False)
-records_to_show = dfL1.head(3)
-html_table_final = generate_league_table(standingsL1, 16, "Ligue 1")
+html_table_final = generate_league_table(standingsLL, 16, "Premier League")
 
 col1, col2 = st.columns([3,2])
 with col1:
@@ -578,30 +597,23 @@ with col2:
     st.components.v1.html(html_table_final, height=460)
 
 
-st.subheader("Bundesliga")
+st.markdown(
+    """
+    <a href="/Ligue_1" target=_self style="text-decoration: none; color: black;">
+        <span style="font-size: 24px; font-weight: bold;">Ligue 1</span>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
 
-dfBL = dfBL.sort_values(by = 'date', ascending=False)
-records_to_show = dfBL.head(3)
-html_table_final = generate_league_table(standingsBL, 16, "Bundesliga")
+if len(dfPLNew["round"])>0:
+    records_to_show = dfL1New.sort_values(by = ['date', 'time']).head(3)
+    records_to_show["new"] = True
+else:
+    records_to_show = dfL1.sort_values(by = ['date', 'time'], ascending=False).head(3)
+    records_to_show["new"] = False
 
-col1, col2 = st.columns([3,2])
-with col1:
-    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
-    # st.components.v1.html(weather_style, height=190)
-    # st.markdown(html_h2h, unsafe_allow_html=True)
-    # st.components.v1.html(form_html, height=240)
-    # st.pyplot(fig21)
-    # if (len(probabilities)>0):
-    #     st.pyplot(fig22)
-with col2:
-    #st.markdown(tab_html, unsafe_allow_html=True)
-    st.components.v1.html(html_table_final, height=460)
-
-st.subheader("Serie A")
-
-dfSA = dfSA.sort_values(by = 'date', ascending=False)
-records_to_show = dfSA.head(3)
-html_table_final = generate_league_table(standingsSA, 16, "Serie A")
+html_table_final = generate_league_table(standingsL1, 16, "Premier League")
 
 col1, col2 = st.columns([3,2])
 with col1:
@@ -616,6 +628,77 @@ with col2:
     #st.markdown(tab_html, unsafe_allow_html=True)
     st.components.v1.html(html_table_final, height=460)
 
+
+st.markdown(
+    """
+    <a href="/Bundesliga" target=_self style="text-decoration: none; color: black;">
+        <span style="font-size: 24px; font-weight: bold;">Bundesliga</span>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
+
+if len(dfPLNew["round"])>0:
+    records_to_show = dfBLNew.sort_values(by = ['date', 'time']).head(3)
+    records_to_show["new"] = True
+else:
+    records_to_show = dfBL.sort_values(by = ['date', 'time'], ascending=False).head(3)
+    records_to_show["new"] = False
+
+html_table_final = generate_league_table(standingsBL, 16, "Premier League")
+
+col1, col2 = st.columns([3,2])
+with col1:
+    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
+    # st.components.v1.html(weather_style, height=190)
+    # st.markdown(html_h2h, unsafe_allow_html=True)
+    # st.components.v1.html(form_html, height=240)
+    # st.pyplot(fig21)
+    # if (len(probabilities)>0):
+    #     st.pyplot(fig22)
+with col2:
+    #st.markdown(tab_html, unsafe_allow_html=True)
+    st.components.v1.html(html_table_final, height=460)
+
+st.markdown(
+    """
+    <a href="/Serie A" target=_self style="text-decoration: none; color: black;">
+        <span style="font-size: 24px; font-weight: bold;">Serie A</span>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
+
+if len(dfPLNew["round"])>0:
+    records_to_show = dfSANew.sort_values(by = ['date', 'time']).head(3)
+    records_to_show["new"] = True
+else:
+    records_to_show = dfSA.sort_values(by = ['date', 'time'], ascending=False).head(3)
+    records_to_show["new"] = False
+
+html_table_final = generate_league_table(standingsSA, 16, "Premier League")
+
+col1, col2 = st.columns([3,2])
+with col1:
+    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
+    # st.components.v1.html(weather_style, height=190)
+    # st.markdown(html_h2h, unsafe_allow_html=True)
+    # st.components.v1.html(form_html, height=240)
+    # st.pyplot(fig21)
+    # if (len(probabilities)>0):
+    #     st.pyplot(fig22)
+with col2:
+    #st.markdown(tab_html, unsafe_allow_html=True)
+    st.components.v1.html(html_table_final, height=460)
+
+st.markdown(
+    """
+    <a href="/Your_model" target=_self style="text-decoration: none; color: black;">
+        <span style="font-size: 24px; font-weight: bold;">Stwórz swój własny model</span>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
 
 # Define local image paths and text content
 # columns_data = [
