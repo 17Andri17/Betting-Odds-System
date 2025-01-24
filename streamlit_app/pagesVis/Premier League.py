@@ -290,8 +290,9 @@ def generate_html_match_list(df):
                 text-align: right;
             }
             hr {
-            width: 100%;
-            color: #eee;
+                width: 100%;
+                color: #eee;
+                margin: 0;
             }
             a {
                 text-decoration: none;
@@ -400,6 +401,19 @@ def loadData():
     df = df.sort_values("round")
     dfPL = df[df["league"] == "pl"]
 
+    df = pd.read_csv("../new_matches_fbref.csv")
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
+    df["date"] = df["date"].astype(str)
+    df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
+    df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
+    df["formation_home"] = df["formation_home"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
+    df["formation_away"] = df["formation_away"].str.replace("4-1-2-1-2", "4-3-1-2", regex=True)
+    df["round"] = df["round"].astype(int)
+    df["home_goals"] = df["home_goals"].astype(int)
+    df["away_goals"] = df["away_goals"].astype(int)
+    df = df.sort_values("round")
+    dfPLNew = df[df["league"] == "pl"]
+
     standings = pd.read_csv("../standings_with_new.csv")
     standings['date']=pd.to_datetime(standings['date'])
     standings['goal_difference'] = standings['goal_difference'].astype(int)
@@ -407,10 +421,10 @@ def loadData():
     standings['goals_conceded'] = standings['goals_conceded'].astype(int)
     standingsPL = standings[standings["league"] == "pl"]
 
-    return dfPL, standingsPL
+    return dfPL, dfPLNew, standingsPL
 
 
-df, standings = loadData()
+df, df_new, standings = loadData()
 df_filtered=df.copy()
 standings_filtered=standings.copy()
 
@@ -455,6 +469,7 @@ date_standings = pd.to_datetime(date_standings)
 
 selected_columns_standings = ['team', 'matches_played', 'wins', 'draws', 'defeats', 'goal_difference', 'goals', 'goals_conceded', 'points']
 table = standings_filtered[selected_columns_standings]
+table = table.sort_values(["points", "goal_difference", "goals"], ascending=False)
 table['place'] = range(1, len(table) + 1)
 table = table.set_index('place')
 standings_data = []

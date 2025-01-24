@@ -15,7 +15,7 @@ from models import FootballMatchPredictor, FootballMatchPredictorOutcome
 
 import math
 from scipy.optimize import minimize_scalar
-from IPython.core.display import HTML
+from urllib.parse import quote
 
 @st.cache_data
 def create_team_structure(idx, formation, starting_eleven):
@@ -516,6 +516,219 @@ def predict_outcome(input_features, model):
         prediction = model(input_tensor)
         return prediction.squeeze()[0].item(), prediction.squeeze()[1].item(), prediction.squeeze()[2].item()
 
+def generate_html_match_list(df, team, home, title):
+    html_template = """
+        <style>
+            .tab {
+                box-sizing: border-box;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                width: 95%;
+                padding: 0px;
+                background-color: #f9f9f9;
+                margin: auto;
+                margin-top: 18px;
+            }
+            .tab_title {
+                font-size: 19px;
+                font-weight: bold;
+                color: #333;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 12px;
+            }
+            .container {
+                width: 90%;
+                margin: 0px auto;
+                padding: 2px 0;
+            }
+            .match {
+                display: grid;
+                grid-template-columns: 0.7fr 2fr 0.2fr 0.5fr;
+                align-items: center;
+                background-color: #f9f9f9;
+                border-radius: 8px;
+                margin-bottom: 0px;
+                padding: 5px 5px;
+                color: black;
+            }
+            .match:hover {
+                background-color: #e6e6e6;
+            }
+            .time-date {
+                font-size: 10px;
+                color: rgba(12, 12, 12, 0.65);
+            }
+            .teams {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                font-size: 12px;
+            }
+            .winner {
+                font-weight: bold;
+            }
+            .win {
+                background-color: #26943b !important;
+            }
+            .away-team {
+                margin-top: 5px;
+            }
+            .score {
+                text-align: right;
+                font-weight: bold;
+                font-size: 14px;
+            }
+            .cell {
+                display: inline-block;
+                width: 18%;
+                height: 25px;
+                background-color: #f9f9f9;
+                border-radius: 6px;
+                border: 1px solid #eee;
+                padding: 0 5px;
+                color: black;
+                font-family: Arial, sans-serif;
+                line-height: 25px;
+                margin-left: 6px;
+                margin-right: 4px;
+            }
+            .result {
+                font-size: 10px;
+                text-align: left;
+                font-weight: 0;
+                float: left;
+            }
+            .odds {
+                font-size: 12px;
+                font-weight: bold;
+                text-align: right;
+            }
+            hr {
+            width: 100%;
+            color: #eee;
+            margin: 0;
+            }
+            a {
+                text-decoration: none;
+            }
+            a:hover {
+                text-decoration: none;
+            }
+            .winner-tag {
+                display: flex;
+                justify-content: right;
+                align-items: center;
+            }
+
+            .circle {
+                color: white;
+                font-size: 16px;
+                font-weight: bold;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                border-radius: 10%;
+                width: 22px;
+                height: 22px;
+            }
+            
+            .zwin_green {
+                background-color: #28a745;
+            }
+
+            .zwin_blue {
+                background-color: #374df5;
+            }
+
+            .plose_red {
+                background-color: #dc3545;
+            }
+
+            .rdraw_grey {
+                background-color: #6c757d;
+            }
+        </style>
+    """
+
+    html_template += f"""<div class="tab"><div class="tab_title">{title}</div><div class="container">"""
+
+
+    match_template = """
+    <a href="/Statystyki_Premier_League?home_team={encoded_home_team}&date={original_date}&league=pl" target=_self>
+    <div class="match">
+        <div class="time-date"><div>{date}</div><div style="padding-left: 4px;">{time}</div></div>
+        <div class="teams">
+            <div class="home-team{home_class}">{home_team}</div>
+            <div class="away-team{away_class}">{away_team}</div>
+        </div>
+        <div class="score">
+            <div>{home_goals}</div>
+            <div>{away_goals}</div>
+        </div>
+        <div class="winner-tag">
+            <div class="circle{win_draw}">{letter}</div>
+        </div>
+    </div></a>
+    {hr}
+    """
+
+    matches_html = "<hr>"
+    for ind, row in df.iterrows():
+        home_class = ""
+        away_class = ""
+        if ind == df.tail(1).index:
+            hr = "<hr"
+        else:
+            hr = "<hr>"
+        if row["home_goals"] > row["away_goals"]:
+            home_class = " winner"
+            if row["home_team"] == team:
+                if home == "home":
+                    win_draw = " zwin_green"
+                else:
+                    win_draw = " zwin_blue"
+            else:
+                if home == "homeaway":
+                    win_draw = " zwin_blue"
+                else:
+                    win_draw = " plose_red"
+                
+        elif row["home_goals"] < row["away_goals"]:
+            away_class = " winner"
+            if row["home_team"] == team:
+                if home == "homeaway":
+                    win_draw = " zwin_blue"
+                else:
+                    win_draw = " plose_red"
+            else:
+                if home == "home":
+                    win_draw = " zwin_green"
+                else:
+                    win_draw = " zwin_blue"
+        else:
+            win_draw = " rdraw_grey"
+        matches_html += match_template.format(
+            date=row["date"].date().strftime('%Y-%m-%d')[-2:]+"."+row["date"].date().strftime('%Y-%m-%d')[5:7]+"."+row["date"].date().strftime('%Y-%m-%d')[2:4],
+            original_date = row["date"].date().strftime('%Y-%m-%d'),
+            time=row["time"],
+            home_team=row["home_team"],
+            encoded_home_team = quote(row["home_team"]),
+            away_team=row["away_team"],
+            home_goals=row["home_goals"],
+            away_goals=row["away_goals"],
+            home_class = home_class,
+            away_class = away_class,
+            win_draw = win_draw,
+            letter = win_draw.upper()[1],
+            hr = hr,
+        )
+        
+
+    html_template += f"{matches_html}</div></div>"
+
+    return html_template
+
 @st.cache_data
 def load_data():
     home_team = st.query_params["home_team"]
@@ -798,9 +1011,9 @@ if len(merged_df[(merged_df["date"] == date) & (merged_df["home_team"] == home_t
     probabilities = [round(probabilities[0], 2), round(probabilities[1], 2), 1 - round(probabilities[0], 2) - round(probabilities[1], 2)]
 else:
     probabilities = []
-colors = ['green', 'gray', 'blue']
+colors = ['#28a745', '#6c757d', '#374df5']
 
-fig21, ax = plt.subplots(figsize=(6, 1))
+fig21, ax = plt.subplots(figsize=(8, 1))
 start = 0
 
 for prob, color in zip(probabilities2, colors):
@@ -810,12 +1023,12 @@ for prob, color in zip(probabilities2, colors):
 start = 0
 sumi = 0
 for prob, color in zip(probabilities2, colors):
-    ax.text(start + prob / 2, 0, f"{int(prob * 100)}%", color='black', va='center', ha='center', fontsize=10)
+    ax.text(start + prob / 2, 0, f"{int(round(prob * 100))}%", color='black', va='center', ha='center', fontsize=14)
     start += prob
 
 ax.set_xlim(0, 1)
 ax.axis('off')  # Turn off the axis
-plt.title('Prawdopodbieństwo zdarzeń modelu', pad=10)
+# plt.title('Prawdopodbieństwo zdarzeń modelu')
 plt.show()
 plt.tight_layout()
 
@@ -834,7 +1047,7 @@ if len(probabilities) > 0:
 
     ax.set_xlim(0, 1)
     ax.axis('off')  # Turn off the axis
-    plt.title('Prawdopodbieństwo zdarzeń bukmacherów', pad=10)
+    # plt.title('Prawdopodbieństwo zdarzeń bukmacherów', pad=10)
     plt.show()
     plt.tight_layout()
 
@@ -855,13 +1068,17 @@ home_stats = [int(v) for v in home_stats]
 away_stats = [int(v) for v in away_stats]
 
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Informacje", "Statystyki", "Składy", "Kursy bukmacherskie", "Inne"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Informacje", "Statystyki", "Składy", "Kursy bukmacherskie", "Analiza"])
 
+
+############ Statystyki ############
 with tab2:
-    col1, col2, col3 = st.columns([4, 11, 4])
+    col1, col2, col3 = st.columns([4, 13, 4])
     with col2:
         statsGraph(home_stats, away_stats, categories)
 
+
+############ Składy ############
 with tab3:
     col1, col2, col3 = st.columns([1, 4, 1])
     with col2:
@@ -869,100 +1086,111 @@ with tab3:
             squads(players, date, home_team, away_team, formation_home, formation_away)
 
 
+############ Analiza ############
+probabilities = [int(round(100*match_probabilities["home_win"], 0)), int(round(100*match_probabilities["draw"], 0)), 100 - int(round(100*match_probabilities["home_win"], 0) + round(100*match_probabilities["draw"], 0))]
+colors = ['#28a745', '#6c757d', '#374df5']
+prob_html = """
+        <style>
+        .bar-container {
+            font-family: "Source Sans Pro";
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 5px auto;
+            width: 100%;
+            height: 40px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .bar-green {
+            background-color: #28a745;
+            text-align: center;
+            color: white;
+            line-height: 40px;
+        }
+        .bar-gray {
+            background-color: #6c757d;
+            text-align: center;
+            color: white;
+            line-height: 40px;
+        }
+        .bar-blue {
+            background-color: #374df5;
+            text-align: center;
+            color: white;
+            line-height: 40px;
+        }
+        .button-container {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .button-container button:hover {
+            background-color: #0056b3;
+        }
+        h3 {
+            text-align: center;
+            font-size: 28px;
+            font-family: "Source Sans Pro";
+        }
+    </style>"""
+
+prob_html += f"""
+    <h3>Prawdopodobieństwo wyniku</h3>
+    <div class="bar-container">
+        <div class="bar-green" style="width:{probabilities[0]}%;">{probabilities[0]}%</div>
+        <div class="bar-gray" style="width:{probabilities[1]}%;">{probabilities[1]}%</div>
+        <div class="bar-blue" style="width:{probabilities[2]}%;">{probabilities[2]}%</div>
+    </div>
+    <div class="button-container">
+        <a href="/Your_model?home_team={quote(home_team)}&date={curr_match["date"].date().strftime('%Y-%m-%d')}&league=pl" target=_self>
+            <button>Stwórz własny model</button>
+        </a>
+    </div>"""
+
+
 
 home_matches = matches[(matches["date"] < date) &
     ((matches["home_team"] == home_team) | (matches["away_team"] == home_team)) ]
 away_matches = matches[(matches["date"] < date) &
     ((matches["home_team"] == away_team) | (matches["away_team"] == away_team)) ]
-home_matches = home_matches[["date", "time", "home_team", "home_goals", "away_goals", "away_team"]]
-home_matches = home_matches.sort_values(by="date", ascending=False)
-away_matches = away_matches[["date", "time", "home_team", "home_goals", "away_goals", "away_team"]]
-away_matches = away_matches.sort_values(by="date", ascending=False)
+home_matches = home_matches.sort_values(by=["date", "time"], ascending=False)
+away_matches = away_matches.sort_values(by=["date", "time"], ascending=False)
+h2h = matches[((matches["home_team"] == home_team) & (matches["away_team"] == away_team)) |
+            ((matches["home_team"] == away_team) & (matches["away_team"] == home_team)) & (matches["date"] < curr_match["date"])]
+h2h = h2h.sort_values(by=["date", "time"], ascending=False)
 
-last_home = f"""
-    <div style="text-align: center; font-size: 15px;
-        background-color: #f8f9fa; 
-        border-radius: 10px; 
-        padding: 5px; 
-        margin: 5px;
-        box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
-    <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze {home_team}</div>
-    """
 
-if len(home_matches) == 0:
-    last_home += "<div style='font-size: 20px;'>Brak danych na temat ostatnich meczów</div>"
-
-for j in range(min(5, len(home_matches))):
-    last_home += f"""
-    <div style="display: flex; justify-content: center; margin-bottom: 5px;">
-        <div style="width: 120px;">{home_matches.iloc[j]['date'].date()} {home_matches.iloc[j]['time']}</div>
-        <div style="width: 200px;">{home_matches.iloc[j]['home_team']}</div>
-        <div style="width: 100px;">{int(home_matches.iloc[j]['home_goals'])} - {int(home_matches.iloc[j]['away_goals'])}</div>
-        <div style="width: 200px;">{home_matches.iloc[j]['away_team']}</div>
-    """
-    if home_matches.iloc[j]['home_team'] == home_team:
-        if home_matches.iloc[j]['home_goals'] > home_matches.iloc[j]['away_goals']:
-            last_home += "<div style='width: 50px; background-color: green;'>W</div>"
-        elif home_matches.iloc[j]['home_goals'] < home_matches.iloc[j]['away_goals']:
-            last_home += "<div style='width: 50px; background-color: red;'>L</div>"
-        else:
-            last_home += "<div style='width: 50px; background-color: gray;'>D</div>"
-    else:
-        if home_matches.iloc[j]['home_goals'] > home_matches.iloc[j]['away_goals']:
-            last_home += "<div style='width: 50px; background-color: red;'>L</div>"
-        elif home_matches.iloc[j]['home_goals'] < home_matches.iloc[j]['away_goals']:
-            last_home += "<div style='width: 50px; background-color: green;'>W</div>"
-        else:
-            last_home += "<div style='width: 50px; background-color: gray;'>D</div>"
-    last_home+="</div>"
-last_home += "</div>"
-
-last_away = f"""
-            <div style="text-align: center; font-size: 15px;
-                background-color: #f8f9fa; 
-                border-radius: 10px; 
-                padding: 5px; 
-                margin: 5px;
-                box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
-            <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Ostatnie mecze {away_team}</div>
-            """
-
-if len(away_matches) == 0:
-    last_away += "<div style='font-size: 20px;'>Brak danych na temat ostatnich meczów</div>"
-
-for j in range(min(5, len(away_matches))):
-    last_away += f"""
-    <div style="display: flex; justify-content: center; margin-bottom: 5px;">
-        <div style="width: 120px;">{away_matches.iloc[j]['date'].date()} {away_matches.iloc[j]['time']}</div>
-        <div style="width: 200px;">{away_matches.iloc[j]['home_team']}</div>
-        <div style="width: 100px;">{int(away_matches.iloc[j]['home_goals'])} - {int(away_matches.iloc[j]['away_goals'])}</div>
-        <div style="width: 200px;">{away_matches.iloc[j]['away_team']}</div>
-    """
-    if away_matches.iloc[j]['home_team'] == away_team:
-        if away_matches.iloc[j]['home_goals'] > away_matches.iloc[j]['away_goals']:
-            last_away += "<div style='width: 50px; background-color: green;'>W</div>"
-        elif away_matches.iloc[j]['home_goals'] < away_matches.iloc[j]['away_goals']:
-            last_away += "<div style='width: 50px; background-color: red;'>L</div>"
-        else:
-            last_away += "<div style='width: 50px; background-color: gray;'>D</div>"
-    else:
-        if away_matches.iloc[j]['home_goals'] > away_matches.iloc[j]['away_goals']:
-            last_away += "<div style='width: 50px; background-color: red;'>L</div>"
-        elif away_matches.iloc[j]['home_goals'] < away_matches.iloc[j]['away_goals']:
-            last_away += "<div style='width: 50px; background-color: green;'>W</div>"
-        else:
-            last_away += "<div style='width: 50px; background-color: gray;'>D</div>"
-    last_away+="</div>"
-last_away += "</div>"
 
 
 with tab5:
-    col2, col3 = st.columns(2)
+    col1, col2, col3 = st.columns([1,5,1])
+    with col2:
+        # st.markdown("""<h3 style="text-align: center; margin-bottom: -28px">Prawdopodobieństwo wyniku</h3>""", unsafe_allow_html=True)
+        # st.pyplot(fig21)
+        st.markdown(prob_html, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([3,3,3])
+    with col1:        
+        # st.markdown(last_home, unsafe_allow_html=True)
+        st.markdown(generate_html_match_list(home_matches.head(5), home_team, "home", "Ostatnie mecze gospodarzy"), unsafe_allow_html=True)
+
     with col2:        
-        st.markdown(last_home, unsafe_allow_html=True)
+        # st.markdown(last_home, unsafe_allow_html=True)
+        st.markdown(generate_html_match_list(h2h.head(5), home_team, "homeaway", "Bezpośrednie mecze"), unsafe_allow_html=True)
 
     with col3:        
-        st.markdown(last_away, unsafe_allow_html=True)
+        # st.markdown(last_away, unsafe_allow_html=True)
+        st.markdown(generate_html_match_list(away_matches.head(5), away_team, "away", "Ostatnie mecze gości"), unsafe_allow_html=True)
     
     # Radar plot
         
@@ -990,9 +1218,9 @@ with tab5:
     plt.legend(loc='lower right', bbox_to_anchor=(0.2, 0.2))
     plt.title('Porównanie wybranych statystyk z ostatnich 5 meczów', size=15, pad=10)
 
-    col1, col2, col3=st.columns([2, 3, 2])
-    with col2:
-        st.pyplot(fig4)
+    # col1, col2, col3=st.columns([2, 3, 2])
+    # with col2:
+    #     st.pyplot(fig4)
 
     
     filtr1, filtr2 = st.columns(2)
@@ -1006,91 +1234,61 @@ with tab5:
     }
     """
     st.html(f"<style>{css}</style>")
-    with filtr1:
-        team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
-    with filtr2:
-        stat_filter = st.selectbox("Wybierz statystykę", options=["Bramki w meczu", "Strzelone bramki", "Stracone bramki"], key="stat_filter")
+    # with filtr1:
+    #     team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
+    # with filtr2:
+    #     stat_filter = st.selectbox("Wybierz statystykę", options=["Bramki w meczu", "Strzelone bramki", "Stracone bramki"], key="stat_filter")
     
 
-    team = team_filter
-    stat_name = stat_filter
-    n = 10
-    last_matches = select_last_matches(matches, team, date, n)
-    if stat_name == "Strzelone bramki":
-        stat = "goals"
-        stat_df = get_stat(last_matches, team, stat)
-        threshold = 1.5
-    if stat_name == "Stracone bramki":
-        stat = "goals"
-        stat_df = get_stat(last_matches, team, stat, True)
-        threshold = 1.5
-    if stat_name == "Bramki w meczu":
-        stat = "goals"
-        stat_df = get_stat(last_matches, team, stat, sum = True)
-        threshold = 2.5
+    # team = team_filter
+    # stat_name = stat_filter
+    # n = 10
+    # last_matches = select_last_matches(matches, team, date, n)
+    # if stat_name == "Strzelone bramki":
+    #     stat = "goals"
+    #     stat_df = get_stat(last_matches, team, stat)
+    #     threshold = 1.5
+    # if stat_name == "Stracone bramki":
+    #     stat = "goals"
+    #     stat_df = get_stat(last_matches, team, stat, True)
+    #     threshold = 1.5
+    # if stat_name == "Bramki w meczu":
+    #     stat = "goals"
+    #     stat_df = get_stat(last_matches, team, stat, sum = True)
+    #     threshold = 2.5
 
-    # Set colors: green if above threshold, red otherwise
-    colors = ["green" if val > threshold else "red" for val in stat_df[stat]]
+    # # Set colors: green if above threshold, red otherwise
+    # colors = ["green" if val > threshold else "red" for val in stat_df[stat]]
 
-    # Plot the bar chart
-    fig3 = plt.figure(figsize=(10, 6))
-    bars = plt.bar(stat_df["new_date"], stat_df[stat], color=colors)
+    # # Plot the bar chart
+    # fig3 = plt.figure(figsize=(10, 6))
+    # bars = plt.bar(stat_df["new_date"], stat_df[stat], color=colors)
 
-    # Add threshold line
-    plt.axhline(y=threshold, color="gray", linestyle="--", label=f"Linia = {threshold}")
+    # # Add threshold line
+    # plt.axhline(y=threshold, color="gray", linestyle="--", label=f"Linia = {threshold}")
 
-    # Add value labels on top of bars
-    for bar in bars:
-        height = int(bar.get_height())
-        if height == 0:
-            plt.text(bar.get_x() + bar.get_width() / 2, height, str(height),
-                ha="center", va="bottom", fontsize=20)
-        else:
-            plt.text(bar.get_x() + bar.get_width() / 2, height-0.4, str(height),
-                ha="center", va="bottom", fontsize=20)
+    # # Add value labels on top of bars
+    # for bar in bars:
+    #     height = int(bar.get_height())
+    #     if height == 0:
+    #         plt.text(bar.get_x() + bar.get_width() / 2, height, str(height),
+    #             ha="center", va="bottom", fontsize=20)
+    #     else:
+    #         plt.text(bar.get_x() + bar.get_width() / 2, height-0.4, str(height),
+    #             ha="center", va="bottom", fontsize=20)
 
-    # Chart styling
-    plt.title(stat_name.capitalize() + " " + team + " w ostatnich " + str(n) + " meczach")
-    plt.xlabel("Mecze")
-    plt.ylabel(stat)
-    plt.legend()
-    plt.tight_layout()
 
-    # Show plot
-    plt.show()
-    st.write(fig3)
+    # plt.title(stat_name.capitalize() + " " + team + " w ostatnich " + str(n) + " meczach")
+    # plt.xlabel("Mecze")
+    # plt.ylabel(stat)
+    # plt.legend()
+    # plt.tight_layout()
 
-    h2h = matches2[((matches2["home_team"] == home_team) & (matches2["away_team"] == away_team)) |
-            ((matches2["home_team"] == away_team) & (matches2["away_team"] == home_team))]
-    h2h = h2h[["date", "time", "home_team", "home_goals", "away_goals", "away_team"]]
-    h2h = h2h.sort_values(by="date", ascending=False)
-    data = """
-                <div style="text-align: center; font-size: 15px;
-                    border-radius: 10px; 
-                    padding: 5px; 
-                    margin: 5px;
-                    box-shadow: 4px 4px 8px rgba(0.2, 0.2, 0.2, 0.2);">
-                <div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 25px; font-weight:bold;">Mecze pomiędzy drużynami</div>
-                """
-    
-    if len(h2h) == 0:
-        data += "<div style='font-size: 20px;'>Brak danych na temat meczów pomiędzy drużynami</div>"
-    for j in range(len(h2h)):
-        if h2h.iloc[j]['date'] == date:
-            data += """<div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 15px; background-color:Aqua;">"""
-        elif h2h.iloc[j]['date'] > date:
-            data += """<div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 15px; background-color:LightGreen;">"""
-        else:
-            data += """<div style="display: flex; justify-content: center; margin-bottom: 5px; font-size: 15px; background-color:LightCoral;">"""
-        data += f"""
-            <div style="width: 120px;">{h2h.iloc[j]['date']} {h2h.iloc[j]['time']}</div>
-            <div style="width: 200px;">{h2h.iloc[j]['home_team']}</div>
-            <div style="width: 100px;">{int(h2h.iloc[j]['home_goals'])} - {int(h2h.iloc[j]['away_goals'])}</div>
-            <div style="width: 200px;">{h2h.iloc[j]['away_team']}</div>
-        </div>
-        """
-    data += "</div>"
-    st.markdown(data, unsafe_allow_html=True)
+    # col1, col2 = st.columns([1,1])
+    # with col1:
+    #     st.write(fig3)
+    # with col2:
+    #     st.write(fig3)
 
 
 ############ Zakładka z informacjami ############
@@ -1159,7 +1357,10 @@ st.markdown(
     """
     <style>
     .stAppHeader {
-    display: none;
+        display: none;
+    }
+    .stMainBlockContainer{
+        padding-top: 25px !important;
     }
     .tab {
         border: 1px solid #ddd;
@@ -1354,15 +1555,14 @@ teams_draws = same_draws + opposite_draws
 # Create the H2H table in HTML
 html_h2h = f"""
 <style>
-.tab_title {"""{
+.tab_title {{
         font-size: 22px;
         font-weight: bold;
         color: #333;
         width: 100%;
         text-align: center;
         margin-bottom: 12px;
-        }"""
-    }
+        }}
 </style>
 <div class="tab" style="margin-top: -6px;">
     <div class="tab_title">Mecze bezpośrednie</div>
