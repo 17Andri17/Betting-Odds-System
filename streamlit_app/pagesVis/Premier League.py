@@ -11,6 +11,11 @@ import joblib
 import torch.nn as nn
 from urllib.parse import quote
 
+if 'theme' not in st.session_state:
+    st.session_state.theme = 'light'
+
+theme = st.session_state.theme
+
 # Chowanie statystyk po zmianie filtrów
 def restartStats():
     pass
@@ -307,7 +312,7 @@ def generate_html_match_list(df):
 
 
     match_template = """
-    <a href="/Statystyki_Premier_League?home_team={encoded_home_team}&date={original_date}&league=pl" target=_self>
+    <a href="/{url_start}?home_team={encoded_home_team}&date={original_date}&league=pl" target=_self>
     <div class="match">
         <div class="time-date">{date}  {time}</div>
         <div class="teams">
@@ -352,9 +357,11 @@ def generate_html_match_list(df):
             draw_course = ""
             away_course = ""
             if row["new"]:
+                url_start = "Statystyki_Przedmeczowe"
                 row["home_goals"] = "-"
                 row["away_goals"] = "-"
             else:
+                url_start = "Statystyki_Pomeczowe"
                 row["home_goals"] = int(row["home_goals"])
                 row["away_goals"] = int(row["away_goals"])
                 if row["home_goals"] > row["away_goals"]:
@@ -382,7 +389,8 @@ def generate_html_match_list(df):
                 away_class = away_class,
                 home_course = home_course,
                 away_course = away_course,
-                drawing_course = draw_course
+                drawing_course = draw_course,
+                url_start = url_start,
             )
         html_template += f"""<div class="round">Kolejka {roundi}</div>
         {matches_html}"""
