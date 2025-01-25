@@ -1243,8 +1243,8 @@ with tab5:
     .st-key-team_filter *, .st-key-stat_filter *, .st-key-team_filter, .st-key-stat_filter {
         cursor: pointer;
     }
-    .stMainBlockContainer {
-        padding-top: 1rem !important;
+    div[data-baseweb="select"] * {
+        cursor: pointer;
     }
     """
     st.html(f"<style>{css}</style>")
@@ -2070,65 +2070,66 @@ def create_bar_chart(df, stat, line, team, stat_type):
     )
     return fig
 
-col1, col2 = st.columns([1, 2])
 
-with col1:
-    # st.header("Filtry")
-    
-    team_filter = st.radio(
-        "Wybierz drużynę",
-        options=[home_team, away_team],
-        index=0,
-        horizontal=True
+with tab5:
+    col1, col2 = st.columns([1, 2])
+
+    with col1:
+        # st.header("Filtry")
+        
+        team_filter = st.radio(
+            "Wybierz drużynę",
+            options=[home_team, away_team],
+            index=0,
+            horizontal=True
+        )
+
+        stat_selected = st.selectbox("Wybierz statystykę", ["Bramki", "Rożne", "Strzały", "Strzały celne", "Spalone"], index=0)
+        
+        stat_type = st.radio(
+            "Rodzaj statystyki",
+            options=[f"{stat_selected} w meczu", f"{stat_selected} drużyny", f"{stat_selected} przeciwników"],
+            index=0
+        )
+        if stat_selected == "Bramki" or stat_selected == "Spalone":
+            if stat_type == f"{stat_selected} w meczu":
+                option_arr = [0.5, 1.5, 2.5, 3.5, 4.5]
+                line_pred = 2.5
+            else:
+                option_arr = [0.5, 1.5, 2.5, 3.5]
+                line_pred = 1.5
+        elif stat_selected == "Rożne":
+            if stat_type == f"{stat_selected} w meczu":
+                option_arr = [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5]
+                line_pred = 8.5
+            else:
+                option_arr = [2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]
+                line_pred = 4.5
+        elif stat_selected == "Strzały":
+            if stat_type == f"{stat_selected} w meczu":
+                option_arr = [17.5, 20.5, 23.5, 26.5, 29.5]
+                line_pred = 23.5
+            else:
+                option_arr = [4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5]
+                line_pred = 8.5
+        elif stat_selected == "Strzały celne":
+            if stat_type == f"{stat_selected} w meczu":
+                option_arr = [4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]
+                line_pred = 7.5
+            else:
+                option_arr = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5]
+                line_pred = 3.5
+
+
+        line_value = st.select_slider(
+        "Wartość linii",
+        options=option_arr,
+        value=line_pred
     )
+        
+    df = select_last_matches(matches, team_filter, date, 10, where="all")
 
-    stat_selected = st.selectbox("Wybierz statystykę", ["Bramki", "Rożne", "Strzały", "Strzały celne", "Spalone"], index=0)
-    
-    stat_type = st.radio(
-        "Rodzaj statystyki",
-        options=[f"{stat_selected} w meczu", f"{stat_selected} drużyny", f"{stat_selected} przeciwników"],
-        index=0
-    )
-    if stat_selected == "Bramki" or stat_selected == "Spalone":
-        if stat_type == f"{stat_selected} w meczu":
-            option_arr = [0.5, 1.5, 2.5, 3.5, 4.5]
-            line_pred = 2.5
-        else:
-            option_arr = [0.5, 1.5, 2.5, 3.5]
-            line_pred = 1.5
-    elif stat_selected == "Rożne":
-        if stat_type == f"{stat_selected} w meczu":
-            option_arr = [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5]
-            line_pred = 8.5
-        else:
-            option_arr = [2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]
-            line_pred = 4.5
-    elif stat_selected == "Strzały":
-        if stat_type == f"{stat_selected} w meczu":
-            option_arr = [17.5, 20.5, 23.5, 26.5, 29.5]
-            line_pred = 23.5
-        else:
-            option_arr = [4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5]
-            line_pred = 8.5
-    elif stat_selected == "Strzały celne":
-        if stat_type == f"{stat_selected} w meczu":
-            option_arr = [4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]
-            line_pred = 7.5
-        else:
-            option_arr = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5]
-            line_pred = 3.5
-
-
-    line_value = st.select_slider(
-    "Wartość linii",
-    options=option_arr,
-    value=line_pred
-)
-    
-df = select_last_matches(matches, team_filter, date, 10, where="all")
-
-# Wykres w prawej kolumnie (col2)
-with col2:
-    st.header("Wykres")
-    chart = create_bar_chart(df, stat_selected, line_value, team_filter, stat_type)
-    st.plotly_chart(chart)
+    with col2:
+        # st.header("Wykres")
+        chart = create_bar_chart(df, stat_selected, line_value, team_filter, stat_type)
+        st.plotly_chart(chart)
