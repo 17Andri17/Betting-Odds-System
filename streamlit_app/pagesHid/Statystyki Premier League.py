@@ -779,7 +779,7 @@ def get_stat(df, team, stat, other_team = False, sum = False):
             df[stat] = df.apply(lambda x: x["home_" + stat] + x["away_" + stat], axis=1)
         df["new_date"] = df["date"].apply(lambda x: x.date().strftime('%Y-%m-%d')[-2:]+"."+x.date().strftime('%Y-%m-%d')[5:7])
         
-        return df[[stat, "new_date"]]
+        return df[[stat, "new_date", "home_team", "home_goals", "away_team", "away_goals"]]
 
 def generate_html_table(teams_stats):
     html_template = """
@@ -1236,8 +1236,7 @@ with tab5:
     # with col2:
     #     st.pyplot(fig4)
 
-    
-    filtr1, filtr2 = st.columns(2)
+    # filtr1, filtr2 = st.columns(2)
 
     css = """
     .st-key-team_filter *, .st-key-stat_filter *, .st-key-team_filter, .st-key-stat_filter {
@@ -1246,6 +1245,13 @@ with tab5:
     div[data-baseweb="select"] * {
         cursor: pointer;
     }
+    div:has(> .st-key-place) {
+        gap: 5px;
+    }
+    .stHorizontalBlock:nth-of-type(4) {
+        margin-top: 35px;
+    }
+
     """
     st.html(f"<style>{css}</style>")
     # with filtr1:
@@ -2032,38 +2038,51 @@ def create_bar_chart(df, stat, line, team, stat_type):
         sumi = False
         other_team = True
     if stat == "Bramki":
-        stat = "goals"
-        stat_df = get_stat(df, team, stat, other_team, sumi)
+        stat_name = "goals"
+        stat_df = get_stat(df, team, stat_name, other_team, sumi)
     if stat == "Rożne":
-        stat = "corner_kicks"
-        stat_df = get_stat(df, team, stat, other_team, sumi)
+        stat_name = "corner_kicks"
+        stat_df = get_stat(df, team, stat_name, other_team, sumi)
     if stat == "Strzały":
-        stat = "shots"
-        stat_df = get_stat(df, team, stat, other_team, sumi)
+        stat_name = "shots"
+        stat_df = get_stat(df, team, stat_name, other_team, sumi)
     if stat == "Strzały celne":
-        stat = "shots_on_target"
-        stat_df = get_stat(df, team, stat, other_team, sumi)
+        stat_name = "shots_on_target"
+        stat_df = get_stat(df, team, stat_name, other_team, sumi)
     if stat == "Spalone":
-        stat = "offsides"
-        stat_df = get_stat(df, team, stat, other_team, sumi)
+        stat_name = "offsides"
+        stat_df = get_stat(df, team, stat_name, other_team, sumi)
 
-    values = stat_df[stat][::-1]
+    values = stat_df[stat_name][::-1]
 
     colors = ["#28a745" if val >= line else "#dc3545" for val in values]
     fig = go.Figure()
     fig.add_trace(go.Bar(
         x=stat_df["new_date"][::-1],
         y=values,
+        hovertemplate="%{customdata[0]} %{customdata[1]} - %{customdata[2]} %{customdata[3]}<extra></extra>",
         marker_color=colors,
         name=stat,
         text=values,
-        marker=dict(cornerradius=10),  # Rounding corners
-        textposition="outside"  # Position of the text
+        marker=dict(cornerradius=10),
+        textposition="outside",
+        customdata=list(zip(
+        stat_df["home_team"][::-1],
+        stat_df["home_goals"][::-1],
+        stat_df["away_goals"][::-1],
+        stat_df["away_team"][::-1]
+        )),
     ))
-    fig.add_hline(y=line, line_dash="dash", line_color="#6c757d", annotation_text=f"Linia: {line}")
+    fig.add_hline(y=line, line_dash="dash", line_color="#333")
     fig.update_layout(
-        title=f"{stat_type} w ostatnich meczach",
+        title={
+        'text': f"{stat} w ostatnich 10 meczach",
+        'x': 0.5,
+        'xanchor': 'center',
+        'yanchor': 'top'
+        },
         xaxis_title="Mecz",
+        xaxis=dict(type="category"),
         yaxis_title=stat_type.capitalize(),
         height=400,
         margin=dict(t=50, b=50)
@@ -2083,6 +2102,21 @@ with tab5:
             index=0,
             horizontal=True
         )
+
+        if team_filter == home_team:
+            place_filter = st.checkbox("Mecze domowe", False, key="place")
+            if place_filter:
+                where = "home"
+            else:
+                where = "all"
+        else:
+            place_filter = st.checkbox("Mecze wyjazdowe", False, key="place")
+            if place_filter:
+                where = "away"
+            else:
+                where = "all"
+
+        
 
         stat_selected = st.selectbox("Wybierz statystykę", ["Bramki", "Rożne", "Strzały", "Strzały celne", "Spalone"], index=0)
         
@@ -2127,7 +2161,7 @@ with tab5:
         value=line_pred
     )
         
-    df = select_last_matches(matches, team_filter, date, 10, where="all")
+    df = select_last_matches(matches, team_filter, date, 10, where=where)
 
     with col2:
         # st.header("Wykres")
