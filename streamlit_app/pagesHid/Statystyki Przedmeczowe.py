@@ -739,6 +739,7 @@ def load_data():
     matches = pd.read_csv("../final_prepared_data_with_weather_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
 
+    #new_matches = pd.read_csv("../new_matches_fbref.csv")
     new_matches = pd.read_csv("../new_matches_fbref.csv")
     new_matches["date"] = pd.to_datetime(new_matches["date"])
 
@@ -1307,17 +1308,17 @@ tab_html = f"""
 </div>
 """
 
-# temperature=curr_match["weather_temperature"]
-# precipitation=curr_match["weather_precipitation"]
-# wind=curr_match["weather_wind"]
-# humidity=curr_match["weather_humidity"]
-# cloud_cover=curr_match["weather_cloud_cover"]
+temperature=curr_match["weather_temperature"]
+precipitation=curr_match["weather_precipitation"]
+wind=curr_match["weather_wind"]
+humidity=curr_match["weather_humidity"]
+cloud_cover=curr_match["weather_cloud_cover"]
 
-temperature=6.3
-precipitation=0.0
-wind=11.7
-humidity=62.5
-cloud_cover=55
+# temperature=6.3
+# precipitation=0.0
+# wind=11.7
+# humidity=62.5
+# cloud_cover=55
 
 if cloud_cover < 30 and precipitation < 1:
     icon = "☀️"
