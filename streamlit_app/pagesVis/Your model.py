@@ -103,12 +103,15 @@ def load_team_names_data():
     today_date = datetime.datetime.today()
     date = st.query_params.get("date", today_date)
     matches = pd.read_csv("../final_prepared_data_with_weather_new.csv")
-    return home_team, date, matches
+    new_matches=pd.read_csv("../new_matches_fbref.csv")
+    return home_team, date, matches, new_matches
 
-home_team, date, matches = load_team_names_data()
+home_team, date, matches, new_matches = load_team_names_data()
 date=str(pd.to_datetime(date).date())
 print(date)
 curr_match = matches[(matches["date"] == date) & (matches["home_team"] == home_team)]
+if curr_match.empty:
+    curr_match=new_matches[(new_matches["date"] == date) & (new_matches["home_team"] == home_team)]
 print(curr_match["away_team"])
 
 if not curr_match.empty:
@@ -205,11 +208,11 @@ for i, (row_name, row_values) in enumerate(probability_data.iterrows()):
     results_table += f"<tr><th>{row_name}</th>"
     for j, value in enumerate(row_values):
         if i == j:
-            cell_style = "background-color: lightgray;"
+            cell_style = "background-color: #b9bbbc;"
         elif i > j:
-            cell_style = "background-color: lightgreen;"
+            cell_style = "background-color: #6dff90;"
         else:
-            cell_style = "background-color: lightblue;"
+            cell_style = "background-color: #72c3fb;"
         results_table += f"<td style='{cell_style}'>{value}</td>"
     results_table += "</tr>"
 
@@ -228,7 +231,7 @@ away_win_prob = 100-home_win_prob-draw_prob
 
 
 probabilities=[home_win_prob, draw_prob, away_win_prob]
-colors = ['lightgreen', 'lightgray', 'lightblue']
+colors = ['#6dff90', '#b9bbbc', '#72c3fb']
 fig1, ax = plt.subplots(figsize=(4, 1))
 start = 0
 
