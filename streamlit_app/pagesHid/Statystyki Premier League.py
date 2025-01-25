@@ -6,6 +6,8 @@ import random
 from mplsoccer import Pitch
 import matplotlib.pyplot as plt
 
+import plotly.graph_objects as go
+
 import torch
 import torch.nn as nn
 import json
@@ -775,7 +777,8 @@ def get_stat(df, team, stat, other_team = False, sum = False):
             df[stat] = df.apply(lambda x: x["away_" + stat] if x["home_team"] == team else x["home_" + stat], axis=1)
         if sum:
             df[stat] = df.apply(lambda x: x["home_" + stat] + x["away_" + stat], axis=1)
-        df["new_date"] = df["date"].apply(lambda x: str(x)[5:7]+"."+str(x)[8:10])
+        df["new_date"] = df["date"].apply(lambda x: x.date().strftime('%Y-%m-%d')[-2:]+"."+x.date().strftime('%Y-%m-%d')[5:7])
+        
         return df[[stat, "new_date"]]
 
 def generate_html_table(teams_stats):
@@ -974,35 +977,38 @@ match_probabilities = get_probabilities(all_features)
 
 
 score_html = """
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap" rel="stylesheet">
 <style>
     .scoreboard {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: white;
-            padding: 0px;
-            margin-bottom: 0px;
-        }
-        .team {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 0 10px;
-            color: #343a40;
-        }
-        .score {
-            font-size: 42px;
-            font-weight: bold;
-            margin: 0 20px;
-            color: #333;
-        }
-        .greyish {
-            color: #999;
-        }
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: white;
+        font-family: "Source Sans Pro";
+        text-align: center;
+    }
+    .team {
+        font-size: 32px;
+        font-weight: bold;
+        margin: 0 10px;
+        color: #343a40;
+        flex: 1;
+        word-wrap: break-word;
+    }
+    .score {
+        font-size: 42px;
+        font-weight: bold;
+        margin: 0 20px;
+        color: #333;
+    }
+    .greyish {
+        color: #999;
+    }
     </style>""" + f"""
     <div class="scoreboard">
-        <div class="team">{home_team}</div>
+        <div class="team" style="text-align: right; padding-right: 10px;">{home_team}</div>
         <div class="score"><span class="{"greyish" if home_goals <= away_goals else ""}">{home_goals} </span> <span class="greyish">-</span> <span class="{"greyish" if home_goals >= away_goals else ""}">{away_goals}</span></div>
-        <div class="team">{away_team}</div>
+        <div class="team" style="text-align: left; padding-left: 10px;">{away_team}</div>
     </div>
 """
 
@@ -1238,63 +1244,63 @@ with tab5:
         cursor: pointer;
     }
     .stMainBlockContainer {
-        padding-top: 3rem !important;
+        padding-top: 1rem !important;
     }
     """
     st.html(f"<style>{css}</style>")
-    with filtr1:
-        team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
-    with filtr2:
-        stat_filter = st.selectbox("Wybierz statystykę", options=["Bramki w meczu", "Strzelone bramki", "Stracone bramki"], key="stat_filter")
+    # with filtr1:
+    #     team_filter = st.selectbox("Wybierz drużynę", options=[home_team, away_team], key="team_filter")
+    # with filtr2:
+    #     stat_filter = st.selectbox("Wybierz statystykę", options=["Bramki w meczu", "Strzelone bramki", "Stracone bramki"], key="stat_filter")
     
 
-    team = team_filter
-    stat_name = stat_filter
-    n = 10
-    last_matches = select_last_matches(matches, team, date, n)
-    if stat_name == "Strzelone bramki":
-        stat = "goals"
-        stat_df = get_stat(last_matches, team, stat)
-        threshold = 1.5
-    if stat_name == "Stracone bramki":
-        stat = "goals"
-        stat_df = get_stat(last_matches, team, stat, True)
-        threshold = 1.5
-    if stat_name == "Bramki w meczu":
-        stat = "goals"
-        stat_df = get_stat(last_matches, team, stat, sum = True)
-        threshold = 2.5
+    # team = team_filter
+    # stat_name = stat_filter
+    # n = 10
+    # last_matches = select_last_matches(matches, team, date, n)
+    # if stat_name == "Strzelone bramki":
+    #     stat = "goals"
+    #     stat_df = get_stat(last_matches, team, stat)
+    #     threshold = 1.5
+    # if stat_name == "Stracone bramki":
+    #     stat = "goals"
+    #     stat_df = get_stat(last_matches, team, stat, True)
+    #     threshold = 1.5
+    # if stat_name == "Bramki w meczu":
+    #     stat = "goals"
+    #     stat_df = get_stat(last_matches, team, stat, sum = True)
+    #     threshold = 2.5
 
-    # Set colors: green if above threshold, red otherwise
-    colors = ["green" if val > threshold else "red" for val in stat_df[stat]]
+    # # Set colors: green if above threshold, red otherwise
+    # colors = ["green" if val > threshold else "red" for val in stat_df[stat]]
 
-    # Plot the bar chart
-    fig3 = plt.figure(figsize=(10, 6))
-    bars = plt.bar(stat_df["new_date"], stat_df[stat], color=colors)
+    # # Plot the bar chart
+    # fig3 = plt.figure(figsize=(10, 6))
+    # bars = plt.bar(stat_df["new_date"], stat_df[stat], color=colors)
 
-    # Add threshold line
-    plt.axhline(y=threshold, color="gray", linestyle="--", label=f"Linia = {threshold}")
+    # # Add threshold line
+    # plt.axhline(y=threshold, color="gray", linestyle="--", label=f"Linia = {threshold}")
 
-    # Add value labels on top of bars
-    for bar in bars:
-        height = int(bar.get_height())
-        if height == 0:
-            plt.text(bar.get_x() + bar.get_width() / 2, height, str(height),
-                ha="center", va="bottom", fontsize=20)
-        else:
-            plt.text(bar.get_x() + bar.get_width() / 2, height-0.4, str(height),
-                ha="center", va="bottom", fontsize=20)
+    # # Add value labels on top of bars
+    # for bar in bars:
+    #     height = int(bar.get_height())
+    #     if height == 0:
+    #         plt.text(bar.get_x() + bar.get_width() / 2, height, str(height),
+    #             ha="center", va="bottom", fontsize=20)
+    #     else:
+    #         plt.text(bar.get_x() + bar.get_width() / 2, height-0.4, str(height),
+    #             ha="center", va="bottom", fontsize=20)
 
 
-    plt.title(stat_name.capitalize() + " " + team + " w ostatnich " + str(n) + " meczach")
-    plt.xlabel("Mecze")
-    plt.ylabel(stat)
-    plt.legend()
-    plt.tight_layout()
+    # plt.title(stat_name.capitalize() + " " + team + " w ostatnich " + str(n) + " meczach")
+    # plt.xlabel("Mecze")
+    # plt.ylabel(stat)
+    # plt.legend()
+    # plt.tight_layout()
 
-    col1, col2 = st.columns([1,1])
-    with col1:
-        st.write(fig3)
+    # col1, col2 = st.columns([1,1])
+    # with col1:
+    #     st.write(fig3)
     # with col2:
     #     st.write(fig3)
 
@@ -1811,7 +1817,7 @@ odds_style = """
     }
 
     .correct {
-        background-color: #26943b;
+        background-color: #28a745;
     }
 
     .result {
@@ -2011,3 +2017,118 @@ with tab4:
     col1, col2, col3 = st.columns([1,6,1])
     with col2:
         st.components.v1.html(odds_html, height=2580)
+
+
+####################### testyyyyyyyyyyyyyyyy
+# Funkcja generująca wykres
+def create_bar_chart(df, stat, line, team, stat_type):
+    if stat_type == f"{stat_selected} w meczu":
+        sumi = True
+        other_team = False
+    elif stat_type == f"{stat_selected} drużyny":
+        sumi = False
+        other_team = False
+    elif stat_type == f"{stat_selected} przeciwników":
+        sumi = False
+        other_team = True
+    if stat == "Bramki":
+        stat = "goals"
+        stat_df = get_stat(df, team, stat, other_team, sumi)
+    if stat == "Rożne":
+        stat = "corner_kicks"
+        stat_df = get_stat(df, team, stat, other_team, sumi)
+    if stat == "Strzały":
+        stat = "shots"
+        stat_df = get_stat(df, team, stat, other_team, sumi)
+    if stat == "Strzały celne":
+        stat = "shots_on_target"
+        stat_df = get_stat(df, team, stat, other_team, sumi)
+    if stat == "Spalone":
+        stat = "offsides"
+        stat_df = get_stat(df, team, stat, other_team, sumi)
+
+    values = stat_df[stat][::-1]
+
+    colors = ["#28a745" if val >= line else "#dc3545" for val in values]
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=stat_df["new_date"][::-1],
+        y=values,
+        marker_color=colors,
+        name=stat,
+        text=values,
+        marker=dict(cornerradius=10),  # Rounding corners
+        textposition="outside"  # Position of the text
+    ))
+    fig.add_hline(y=line, line_dash="dash", line_color="#6c757d", annotation_text=f"Linia: {line}")
+    fig.update_layout(
+        title=f"{stat_type} w ostatnich meczach",
+        xaxis_title="Mecz",
+        yaxis_title=stat_type.capitalize(),
+        height=400,
+        margin=dict(t=50, b=50)
+    )
+    return fig
+
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    # st.header("Filtry")
+    
+    team_filter = st.radio(
+        "Wybierz drużynę",
+        options=[home_team, away_team],
+        index=0,
+        horizontal=True
+    )
+
+    stat_selected = st.selectbox("Wybierz statystykę", ["Bramki", "Rożne", "Strzały", "Strzały celne", "Spalone"], index=0)
+    
+    stat_type = st.radio(
+        "Rodzaj statystyki",
+        options=[f"{stat_selected} w meczu", f"{stat_selected} drużyny", f"{stat_selected} przeciwników"],
+        index=0
+    )
+    if stat_selected == "Bramki" or stat_selected == "Spalone":
+        if stat_type == f"{stat_selected} w meczu":
+            option_arr = [0.5, 1.5, 2.5, 3.5, 4.5]
+            line_pred = 2.5
+        else:
+            option_arr = [0.5, 1.5, 2.5, 3.5]
+            line_pred = 1.5
+    elif stat_selected == "Rożne":
+        if stat_type == f"{stat_selected} w meczu":
+            option_arr = [5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5, 12.5]
+            line_pred = 8.5
+        else:
+            option_arr = [2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]
+            line_pred = 4.5
+    elif stat_selected == "Strzały":
+        if stat_type == f"{stat_selected} w meczu":
+            option_arr = [17.5, 20.5, 23.5, 26.5, 29.5]
+            line_pred = 23.5
+        else:
+            option_arr = [4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5, 11.5]
+            line_pred = 8.5
+    elif stat_selected == "Strzały celne":
+        if stat_type == f"{stat_selected} w meczu":
+            option_arr = [4.5, 5.5, 6.5, 7.5, 8.5, 9.5, 10.5]
+            line_pred = 7.5
+        else:
+            option_arr = [1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5]
+            line_pred = 3.5
+
+
+    line_value = st.select_slider(
+    "Wartość linii",
+    options=option_arr,
+    value=line_pred
+)
+    
+df = select_last_matches(matches, team_filter, date, 10, where="all")
+
+# Wykres w prawej kolumnie (col2)
+with col2:
+    st.header("Wykres")
+    chart = create_bar_chart(df, stat_selected, line_value, team_filter, stat_type)
+    st.plotly_chart(chart)

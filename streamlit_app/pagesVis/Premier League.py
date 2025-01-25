@@ -141,7 +141,7 @@ def generate_html_table(teams_stats):
                 height: 25px;
                 line-height: 25px;
                 border-radius: 50%;
-                background-color: #26943b;
+                background-color: #28a745;
                 color: white;
                 font-weight: bold;
             }}
@@ -254,7 +254,7 @@ def generate_html_match_list(df):
                 font-weight: bold;
             }
             .win {
-                background-color: #26943b !important;
+                background-color: #28a745 !important;
             }
             .away-team {
                 margin-top: 5px;
