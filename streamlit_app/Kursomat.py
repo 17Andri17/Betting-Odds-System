@@ -468,7 +468,7 @@ def generate_league_table(standings, place, league):
             team_stats["highlight"] = ""
             if i<5:
                 team_stats["highlight"] = "green"
-            if i>17:
+            if i>place+1:
                 team_stats["highlight"] = "red"
             team_stats["name"] = row['team']
             team_stats["played"] = row['matches_played']
@@ -536,8 +536,19 @@ dfPL, dfLL, dfBL, dfL1, dfSA, standingsPL, standingsLL, standingsBL, standingsL1
 
 st.markdown(
     """
-    <a href="/Premier_League" target=_self style="text-decoration: none; color: black;">
-        <span style="font-size: 24px; font-weight: bold;">Premier League</span>
+    <a href="/Premier_League" target=_self style="
+        text-decoration: none; 
+        color: black; 
+        display: inline-block; 
+        font-size: 32px; 
+        font-weight: bold; 
+        padding: 20px 40px; 
+        background-color: #f0f0f0; 
+        border-radius: 10px; 
+        text-align: center; 
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        ">
+        Premier League
     </a>
     """,
     unsafe_allow_html=True
@@ -567,8 +578,19 @@ with col2:
 
 st.markdown(
     """
-    <a href="/La_Liga" target=_self style="text-decoration: none; color: black;">
-        <span style="font-size: 24px; font-weight: bold;">La Liga</span>
+    <a href="/La_Liga" target=_self style="
+        text-decoration: none; 
+        color: black; 
+        display: inline-block; 
+        font-size: 32px; 
+        font-weight: bold; 
+        padding: 20px 40px; 
+        background-color: #f0f0f0; 
+        border-radius: 10px; 
+        text-align: center; 
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        ">
+        La Liga
     </a>
     """,
     unsafe_allow_html=True
@@ -581,7 +603,7 @@ else:
     records_to_show = dfLL.sort_values(by = ['date', 'time'], ascending=False).head(3)
     records_to_show["new"] = False
 
-html_table_final = generate_league_table(standingsLL, 16, "Premier League")
+html_table_final = generate_league_table(standingsLL, 16, "La Liga")
 
 col1, col2 = st.columns([3,2])
 with col1:
@@ -599,21 +621,32 @@ with col2:
 
 st.markdown(
     """
-    <a href="/Ligue_1" target=_self style="text-decoration: none; color: black;">
-        <span style="font-size: 24px; font-weight: bold;">Ligue 1</span>
+    <a href="/Ligue_1" target=_self style="
+        text-decoration: none; 
+        color: black; 
+        display: inline-block; 
+        font-size: 32px; 
+        font-weight: bold; 
+        padding: 20px 40px; 
+        background-color: #f0f0f0; 
+        border-radius: 10px; 
+        text-align: center; 
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        ">
+        Ligue 1
     </a>
     """,
     unsafe_allow_html=True
 )
 
-if len(dfPLNew["round"])>0:
+if len(dfL1New["round"])>0:
     records_to_show = dfL1New.sort_values(by = ['date', 'time']).head(3)
     records_to_show["new"] = True
 else:
     records_to_show = dfL1.sort_values(by = ['date', 'time'], ascending=False).head(3)
     records_to_show["new"] = False
 
-html_table_final = generate_league_table(standingsL1, 16, "Premier League")
+html_table_final = generate_league_table(standingsL1, 14, "Ligue 1")
 
 col1, col2 = st.columns([3,2])
 with col1:
@@ -631,21 +664,32 @@ with col2:
 
 st.markdown(
     """
-    <a href="/Bundesliga" target=_self style="text-decoration: none; color: black;">
-        <span style="font-size: 24px; font-weight: bold;">Bundesliga</span>
+    <a href="/Bundesliga" target=_self style="
+        text-decoration: none; 
+        color: black; 
+        display: inline-block; 
+        font-size: 32px; 
+        font-weight: bold; 
+        padding: 20px 40px; 
+        background-color: #f0f0f0; 
+        border-radius: 10px; 
+        text-align: center; 
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        ">
+        Bundesliga
     </a>
     """,
     unsafe_allow_html=True
 )
 
-if len(dfPLNew["round"])>0:
+if len(dfBLNew["round"])>0:
     records_to_show = dfBLNew.sort_values(by = ['date', 'time']).head(3)
     records_to_show["new"] = True
 else:
     records_to_show = dfBL.sort_values(by = ['date', 'time'], ascending=False).head(3)
     records_to_show["new"] = False
 
-html_table_final = generate_league_table(standingsBL, 16, "Premier League")
+html_table_final = generate_league_table(standingsBL, 14, "Bundesliga")
 
 col1, col2 = st.columns([3,2])
 with col1:
@@ -662,21 +706,32 @@ with col2:
 
 st.markdown(
     """
-    <a href="/Serie A" target=_self style="text-decoration: none; color: black;">
-        <span style="font-size: 24px; font-weight: bold;">Serie A</span>
+    <a href="/Serie_A" target=_self style="
+        text-decoration: none; 
+        color: black; 
+        display: inline-block; 
+        font-size: 32px; 
+        font-weight: bold; 
+        padding: 20px 40px; 
+        background-color: #f0f0f0; 
+        border-radius: 10px; 
+        text-align: center; 
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        ">
+        Serie A
     </a>
     """,
     unsafe_allow_html=True
 )
 
-if len(dfPLNew["round"])>0:
+if len(dfSANew["round"])>0:
     records_to_show = dfSANew.sort_values(by = ['date', 'time']).head(3)
     records_to_show["new"] = True
 else:
     records_to_show = dfSA.sort_values(by = ['date', 'time'], ascending=False).head(3)
     records_to_show["new"] = False
 
-html_table_final = generate_league_table(standingsSA, 16, "Premier League")
+html_table_final = generate_league_table(standingsSA, 16, "Serie A")
 
 col1, col2 = st.columns([3,2])
 with col1:
@@ -693,9 +748,29 @@ with col2:
 
 st.markdown(
     """
-    <a href="/Your_model" target=_self style="text-decoration: none; color: black;">
-        <span style="font-size: 24px; font-weight: bold;">Stwórz swój własny model</span>
+    <a href="/Your_model" target=_self style="
+        text-decoration: none; 
+        color: black; 
+        display: inline-block; 
+        font-size: 32px; 
+        font-weight: bold; 
+        padding: 20px 40px; 
+        background-color: #f0f0f0; 
+        border-radius: 10px; 
+        text-align: center; 
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        ">
+        Stwórz swój własny model
     </a>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <div style="margin: 50px 0;">
+        <hr style="border: none; height: 2px; background-color: black; margin: 0; width: 100%;">
+    </div>
     """,
     unsafe_allow_html=True
 )
