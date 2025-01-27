@@ -19,7 +19,8 @@ import math
 from scipy.optimize import minimize_scalar
 from urllib.parse import quote
 
-@st.cache_data
+current_league = st.query_params.get("league")
+#@st.cache_data
 def create_team_structure(idx, formation, starting_eleven):
     formation_parts = list(map(int, formation.split('-')))
     used_players = set()
@@ -245,7 +246,7 @@ def create_team_structure(idx, formation, starting_eleven):
 
     return formation_array
 
-@st.cache_data
+#@st.cache_data
 def get_starters(group):
     starters = []
     group = group.sort_index()
@@ -278,7 +279,7 @@ def get_starters(group):
     group = group.iloc[starters]
     return group
 
-@st.cache_data
+#@st.cache_data
 def squads(players, date, home_team, away_team, formation_home, formation_away):
     home_team_players = players[(players["date"]==date) & (players["team"]==home_team)]
     away_team_players = players[(players["date"]==date) & (players["team"]==away_team)]
@@ -340,7 +341,7 @@ def squads(players, date, home_team, away_team, formation_home, formation_away):
     plt.show()
     st.write(fig)
 
-@st.cache_data
+#@st.cache_data
 def statsGraph(home_stats, away_stats, categories):
     total_stats = np.array(home_stats) + np.array(away_stats)
     home_ratios = np.array(home_stats) / total_stats
@@ -657,7 +658,7 @@ def generate_html_match_list(df, team, home, title):
 
 
     match_template = """
-    <a href="/Statystyki_Pomeczowe?home_team={encoded_home_team}&date={original_date}&league=pl" target=_self>
+    <a href="/Statystyki_Pomeczowe?home_team={encoded_home_team}&date={original_date}&league={current_league}" target=_self>
     <div class="match">
         <div class="time-date"><div>{date}</div><div style="padding-left: 4px;">{time}</div></div>
         <div class="teams">
@@ -724,6 +725,7 @@ def generate_html_match_list(df, team, home, title):
             win_draw = win_draw,
             letter = win_draw.upper()[1],
             hr = hr,
+            current_league=current_league
         )
         
 
@@ -731,7 +733,7 @@ def generate_html_match_list(df, team, home, title):
 
     return html_template
 
-@st.cache_data
+#@st.cache_data
 def load_data():
     odds = pd.read_csv("../odds.csv")
     standings = pd.read_csv("../standings_with_new.csv")
