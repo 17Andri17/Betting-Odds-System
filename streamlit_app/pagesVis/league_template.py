@@ -37,10 +37,6 @@ def loadPage(current_league):
         #     if f"PLshow_row_{i}" in st.session_state:
         #         st.session_state[f"PLshow_row_{i}"] = False
 
-    # Pokazywanie statystyk dla i-tego meczu
-    def showStats(i):
-        st.session_state[f"PLshow_row_{i}"] = not st.session_state.get(f"PLshow_row_{i}", False)
-
     # chyba do usunięcia
     def showDateButton():
         if len(season_filter_matches) == 0:
@@ -471,7 +467,7 @@ def loadPage(current_league):
     col1, col2 = st.columns(2)
     with col1:
         season_filter = st.multiselect("Wybierz sezon, z którego chcesz zobaczyć tabelę oraz statystyki",
-            options = standings['season'].unique(), on_change=showDateButton, max_selections=1, key="PLseason_filter")
+            options = standings['season'].unique(), on_change=showDateButton, max_selections=1, key=f"{current_league}_season_filter")
 
         if season_filter == []:
             season_filter_matches = sorted(standings['season'].unique(), reverse=True)[0]
@@ -535,7 +531,7 @@ def loadPage(current_league):
     filtr1, filtr2 = st.columns(2)
 
     with filtr1:
-        team_filter = st.multiselect("Wybierz drużynę", options = sorted(df_filtered[df_filtered['season'] == season_filter_matches]['home_team'].unique()), key="PLteam_filter")
+        team_filter = st.multiselect("Wybierz drużynę", options = sorted(df_filtered[df_filtered['season'] == season_filter_matches]['home_team'].unique()), key=f"{current_league}_team_filter")
     # with filtr2:
     #     number_of_matches = st.slider("Wybierz liczbę wyświetlanych meczów", min_value=10, max_value=100, step=5, value=st.session_state["PLnumber_of_matches"], key="PLnumber_of_matches")
 
@@ -679,6 +675,3 @@ def loadPage(current_league):
         #         st.switch_page("pagesHid/Statystyki Premier League.py")
 
     # st.write(st.session_state)
-
-current_league = st.query_params.get("league", "pl")
-loadPage(current_league)
