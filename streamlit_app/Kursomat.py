@@ -115,7 +115,7 @@ def loadData():
     dfL1 = df[df["league"] == "l1"]
     dfSA = df[df["league"] == "sa"]
 
-    df = pd.read_csv("../data/new_matches_fbref.csv")
+    df = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/")
     df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
     df["date"] = df["date"].astype(str)
     df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
@@ -130,7 +130,7 @@ def loadData():
     dfL1New = df[df["league"] == "l1"]
     dfSANew = df[df["league"] == "sa"]
 
-    standings = pd.read_csv("../data/standings_with_new.csv")
+    standings = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/")
     standings['date']=pd.to_datetime(standings['date'])
     standings['goal_difference'] = standings['goal_difference'].astype(int)
     standings['goals'] = standings['goals'].astype(int) 
