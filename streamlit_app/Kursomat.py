@@ -274,9 +274,9 @@ def generate_html_table(teams_stats):
     return html_template.format(rows=rows)
 
 def generate_html_match_list(df, league):
-    scaler_outcome = load_scaler("./models/outcome_scaler.pkl")
-    selected_features_outcome = load_selected_fetures("./models/outcome_features.json")
-    model_outcome = load_model("./models/football_match_predictor_v1.pth")
+    scaler_outcome = load_scaler("./data_analysis/models/outcome_scaler.pkl")
+    selected_features_outcome = load_selected_fetures("./data_analysis/models/outcome_features.json")
+    model_outcome = load_model("./data_analysis/models/football_match_predictor_v1.pth")
     html_template = """
         <style>
             .container {
