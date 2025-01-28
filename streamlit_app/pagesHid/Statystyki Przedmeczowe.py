@@ -739,7 +739,6 @@ def generate_html_match_list(df, team, home, title):
 
     return html_template
 
-@st.cache_data
 def load_data():
     odds = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/odds.csv")
     standings = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/standings_with_new.csv")
