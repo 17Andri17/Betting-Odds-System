@@ -19,6 +19,8 @@ import math
 from scipy.optimize import minimize_scalar
 from urllib.parse import quote
 
+current_league = st.query_params.get("league")
+
 @st.cache_data
 def create_team_structure(idx, formation, starting_eleven):
     formation_parts = list(map(int, formation.split('-')))
@@ -657,7 +659,7 @@ def generate_html_match_list(df, team, home, title):
 
 
     match_template = """
-    <a href="/Statystyki_Pomeczowe?home_team={encoded_home_team}&date={original_date}&league=pl" target=_self>
+    <a href="/Statystyki_Pomeczowe?home_team={encoded_home_team}&date={original_date}&league={current_league}" target=_self>
     <div class="match">
         <div class="time-date"><div>{date}</div><div style="padding-left: 4px;">{time}</div></div>
         <div class="teams">
@@ -724,6 +726,7 @@ def generate_html_match_list(df, team, home, title):
             win_draw = win_draw,
             letter = win_draw.upper()[1],
             hr = hr,
+            current_league=current_league
         )
         
 
