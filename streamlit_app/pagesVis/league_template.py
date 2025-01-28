@@ -11,6 +11,14 @@ import joblib
 import torch.nn as nn
 from urllib.parse import quote
 
+css = """
+    .stMainBlockContainer {
+        padding-top: 25px !important;
+    }
+
+"""
+st.html(f"<style>{css}</style>")
+
 def loadPage(current_league):
     if current_league == "pl":
         league_name = "Premier League"
@@ -358,6 +366,9 @@ def loadPage(current_league):
                 filtered_matches = filtered_matches[[col for col in df.columns if 'last5' in col or 'matches_since' in col or 'overall' in col or 'tiredness' in col]]
                 filtered_matches = filtered_matches.drop(columns = ["home_last5_possession", "away_last5_possession"])
                 all_features = filtered_matches.iloc[0]
+                expected_order = scaler_outcome.feature_names_in_
+                all_features = all_features.reindex(expected_order)
+                filtered_matches = filtered_matches.reindex(columns=expected_order)
                 all_features_scaled_outcome = scaler_outcome.transform([all_features])
                 input_features_outcome = all_features_scaled_outcome[:, [filtered_matches.columns.get_loc(col) for col in selected_features_outcome]]
                 draw, home_win, away_win = predict_outcome(input_features_outcome, model_outcome)
@@ -415,7 +426,7 @@ def loadPage(current_league):
     #@st.cache_data
     def loadData():
         df = pd.read_csv("../final_prepared_data_with_new.csv")
-        df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
         df["date"] = df["date"].astype(str)
         df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
         df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
@@ -428,7 +439,7 @@ def loadPage(current_league):
         dfPL = df[df["league"] == current_league]
 
         df = pd.read_csv("../new_matches_fbref.csv")
-        df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
         df["date"] = df["date"].astype(str)
         df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
         df["formation_away"] = df["formation_away"].str.replace(r"-1-1$", "-2", regex=True)
@@ -461,9 +472,7 @@ def loadPage(current_league):
     #     st.session_state["PLnumber_of_matches"] = 10
 
 
-    # Tytuł i tworzenie filtrów
     st.title(f"{league_name}")
-    # Filtry dla tabeli
     col1, col2 = st.columns(2)
     with col1:
         season_filter = st.multiselect("Wybierz sezon, z którego chcesz zobaczyć tabelę oraz statystyki",
@@ -548,7 +557,6 @@ def loadPage(current_league):
                     | (df_filtered['away_team'].isin(team_filter2)))]
     df_filtered.sort_values(by=["round", "date", "time"], ascending=False, inplace=True)
 
-
     df_filtered_new=df_filtered_new[(df_filtered_new['season'] == season_filter_matches)
                 & ((df_filtered_new['home_team'].isin(team_filter2))
                     | (df_filtered_new['away_team'].isin(team_filter2)))]
@@ -565,9 +573,11 @@ def loadPage(current_league):
     new_records_to_show["new"] = True
     records_to_show["new"] = False
 
-    all_records_to_show = pd.concat([new_records_to_show, records_to_show])
+    if date_standings == max(standings_filtered['date']):
+        all_records_to_show = pd.concat([new_records_to_show, records_to_show])
+    else:
+        all_records_to_show = records_to_show
 
-    print(all_records_to_show)
 
     with col2:
         # st.components.v1.html(generate_html_match_list(records_to_show), height=4000)

@@ -9,6 +9,13 @@ import torch.nn.functional as F
 import joblib
 import torch.nn as nn
 
+css = """
+    .stMainBlockContainer {
+        padding-top: 50px !important;
+    }
+
+    """
+st.html(f"<style>{css}</style>")
 
 # @st.cache_data
 # def loadData():
@@ -262,7 +269,7 @@ def generate_html_table(teams_stats):
         """
     return html_template.format(rows=rows)
 
-def generate_html_match_list(df):
+def generate_html_match_list(df, league):
     scaler_outcome = load_scaler("../models/outcome_scaler.pkl")
     selected_features_outcome = load_selected_fetures("../models/outcome_features.json")
     model_outcome = load_model("../models/football_match_predictor_v1.pth")
@@ -325,7 +332,7 @@ def generate_html_match_list(df):
             }
             .cell {
                 display: inline-block;
-                width: 20%;
+                width: 25%;
                 height: 40px;
                 background-color: white;
                 border-radius: 6px;
@@ -366,7 +373,7 @@ def generate_html_match_list(df):
 
 
     match_template = """
-    <a href="/Statystyki_Premier_League?home_team={encoded_home_team}&date={original_date}&league=pl" target=_self>
+    <a href="/Statystyki_Przedmeczowe?home_team={encoded_home_team}&date={original_date}&league={league}" target=_self>
     <div class="match">
         <div class="time-date">{date}  {time}</div>
         <div class="teams">
@@ -402,6 +409,9 @@ def generate_html_match_list(df):
             filtered_matches = filtered_matches[[col for col in df.columns if 'last5' in col or 'matches_since' in col or 'overall' in col or 'tiredness' in col]]
             filtered_matches = filtered_matches.drop(columns = ["home_last5_possession", "away_last5_possession"])
             all_features = filtered_matches.iloc[0]
+            expected_order = scaler_outcome.feature_names_in_
+            all_features = all_features.reindex(expected_order)
+            filtered_matches = filtered_matches.reindex(columns=expected_order)
             all_features_scaled_outcome = scaler_outcome.transform([all_features])
             input_features_outcome = all_features_scaled_outcome[:, [filtered_matches.columns.get_loc(col) for col in selected_features_outcome]]
             draw, home_win, away_win = predict_outcome(input_features_outcome, model_outcome)
@@ -441,7 +451,8 @@ def generate_html_match_list(df):
                 away_class = away_class,
                 home_course = home_course,
                 away_course = away_course,
-                drawing_course = draw_course
+                drawing_course = draw_course,
+                league = league
             )
         html_template += f"""<div class="round">Kolejka {roundi}</div>
         {matches_html}"""
@@ -565,7 +576,7 @@ html_table_final = generate_league_table(standingsPL, 16, "Premier League")
 
 col1, col2 = st.columns([3,2])
 with col1:
-    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
+    st.markdown(generate_html_match_list(records_to_show, "pl"), unsafe_allow_html=True)
     # st.components.v1.html(weather_style, height=190)
     # st.markdown(html_h2h, unsafe_allow_html=True)
     # st.components.v1.html(form_html, height=240)
@@ -574,7 +585,7 @@ with col1:
     #     st.pyplot(fig22)
 with col2:
     #st.markdown(tab_html, unsafe_allow_html=True)
-    st.components.v1.html(html_table_final, height=460)
+    st.components.v1.html(html_table_final, height=520)
 
 st.markdown(
     """
@@ -607,7 +618,7 @@ html_table_final = generate_league_table(standingsLL, 16, "La Liga")
 
 col1, col2 = st.columns([3,2])
 with col1:
-    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
+    st.markdown(generate_html_match_list(records_to_show, "ll"), unsafe_allow_html=True)
     # st.components.v1.html(weather_style, height=190)
     # st.markdown(html_h2h, unsafe_allow_html=True)
     # st.components.v1.html(form_html, height=240)
@@ -616,7 +627,7 @@ with col1:
     #     st.pyplot(fig22)
 with col2:
     #st.markdown(tab_html, unsafe_allow_html=True)
-    st.components.v1.html(html_table_final, height=460)
+    st.components.v1.html(html_table_final, height=490)
 
 
 st.markdown(
@@ -650,7 +661,7 @@ html_table_final = generate_league_table(standingsL1, 14, "Ligue 1")
 
 col1, col2 = st.columns([3,2])
 with col1:
-    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
+    st.markdown(generate_html_match_list(records_to_show, "l1"), unsafe_allow_html=True)
     # st.components.v1.html(weather_style, height=190)
     # st.markdown(html_h2h, unsafe_allow_html=True)
     # st.components.v1.html(form_html, height=240)
@@ -659,7 +670,7 @@ with col1:
     #     st.pyplot(fig22)
 with col2:
     #st.markdown(tab_html, unsafe_allow_html=True)
-    st.components.v1.html(html_table_final, height=460)
+    st.components.v1.html(html_table_final, height=490)
 
 
 st.markdown(
@@ -693,7 +704,7 @@ html_table_final = generate_league_table(standingsBL, 14, "Bundesliga")
 
 col1, col2 = st.columns([3,2])
 with col1:
-    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
+    st.markdown(generate_html_match_list(records_to_show, "bl"), unsafe_allow_html=True)
     # st.components.v1.html(weather_style, height=190)
     # st.markdown(html_h2h, unsafe_allow_html=True)
     # st.components.v1.html(form_html, height=240)
@@ -702,7 +713,7 @@ with col1:
     #     st.pyplot(fig22)
 with col2:
     #st.markdown(tab_html, unsafe_allow_html=True)
-    st.components.v1.html(html_table_final, height=460)
+    st.components.v1.html(html_table_final, height=490)
 
 st.markdown(
     """
@@ -735,7 +746,7 @@ html_table_final = generate_league_table(standingsSA, 16, "Serie A")
 
 col1, col2 = st.columns([3,2])
 with col1:
-    st.markdown(generate_html_match_list(records_to_show), unsafe_allow_html=True)
+    st.markdown(generate_html_match_list(records_to_show, "sa"), unsafe_allow_html=True)
     # st.components.v1.html(weather_style, height=190)
     # st.markdown(html_h2h, unsafe_allow_html=True)
     # st.components.v1.html(form_html, height=240)
@@ -744,7 +755,7 @@ with col1:
     #     st.pyplot(fig22)
 with col2:
     #st.markdown(tab_html, unsafe_allow_html=True)
-    st.components.v1.html(html_table_final, height=460)
+    st.components.v1.html(html_table_final, height=490)
 
 st.markdown(
     """

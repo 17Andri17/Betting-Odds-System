@@ -416,7 +416,12 @@ def exact_score_probability(home_lambda, away_lambda, home_goals, away_goals):
     p_away = (away_lambda ** away_goals) * math.exp(-away_lambda) / math.factorial(away_goals)
     return p_home * p_away
 
-def get_probabilities(all_fetures):
+def get_probabilities(all_features, filtered_matches):
+    expected_order = scaler_outcome.feature_names_in_
+    all_features = all_features.reindex(expected_order)
+    filtered_matches = filtered_matches.reindex(columns=expected_order)
+    
+    
     all_features_scaled = scaler.transform([all_features])
     input_features = all_features_scaled[:, [filtered_matches.columns.get_loc(col) for col in selected_features]]
 
@@ -923,7 +928,7 @@ filtered_matches = filtered_matches.drop(columns = ["home_last5_possession", "aw
 filtered_matches = filtered_matches[~filtered_matches.isna().any(axis=1)]
 all_features = filtered_matches.iloc[0]
 
-match_probabilities = get_probabilities(all_features)
+match_probabilities = get_probabilities(all_features, filtered_matches)
 
 score_html = """
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap" rel="stylesheet">

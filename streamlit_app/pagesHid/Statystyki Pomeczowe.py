@@ -743,9 +743,13 @@ def load_data():
     odds = pd.read_csv("../odds.csv")
     standings = pd.read_csv("../standings_with_new.csv")
     
-    players = pd.read_csv("../players_pl.csv")
+    players_pl = pd.read_csv("../players_pl.csv")
+    players_ll = pd.read_csv("../players_ll.csv")
+    players_sa = pd.read_csv("../players_sa.csv")
+    players_bl = pd.read_csv("../players_bl.csv")
+    players_l1 = pd.read_csv("../players_l1.csv")
     players_new = pd.read_csv("../new_players.csv")
-    players = pd.concat([players, players_new], ignore_index=True)
+    players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa, players_new], ignore_index=True)
     players["date"] = pd.to_datetime(players["date"])
 
     matches = pd.read_csv("../final_prepared_data_with_weather_new.csv")
@@ -1095,7 +1099,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(["Informacje", "Statystyki", "Składy", "
 
 ############ Statystyki ############
 with tab2:
-    col1, col2, col3 = st.columns([4, 13, 4])
+    col1, col2, col3 = st.columns([4, 11, 4])
     with col2:
         statsGraph(home_stats, away_stats, categories)
 
