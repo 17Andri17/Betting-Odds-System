@@ -900,21 +900,21 @@ curr_match = new_matches[(new_matches["date"] == date) & (new_matches["home_team
 matches2 = matches.copy()
 
 # Load models
-scaler = load_scaler("../data_analysis/models/goals_scaler_v1.pkl")
-selected_features = load_selected_fetures("../data_analysis/models/goals_features_v1.json")
-model = load_model("../data_analysis/models/goals_predictor_v1.pth")
+scaler = load_scaler("./data_analysis/models/goals_scaler_v1.pkl")
+selected_features = load_selected_fetures("./data_analysis/models/goals_features_v1.json")
+model = load_model("./data_analysis/models/goals_predictor_v1.pth")
 
-scaler_home = load_scaler("../data_analysis/models/goals_scaler_home_goals_v1.pkl")
-selected_features_home = load_selected_fetures("../data_analysis/models/home_goals_features_v1.json")
-model_home = load_model("../data_analysis/models/goals_home_predictor_v1.pth")
+scaler_home = load_scaler("./data_analysis/models/goals_scaler_home_goals_v1.pkl")
+selected_features_home = load_selected_fetures("./data_analysis/models/home_goals_features_v1.json")
+model_home = load_model("./data_analysis/models/goals_home_predictor_v1.pth")
 
-scaler_away = load_scaler("../data_analysis/models/goals_scaler_away_goals_v1.pkl")
-selected_features_away = load_selected_fetures("../data_analysis/models/away_goals_features_v1.json")
-model_away = load_model("../data_analysis/models/goals_away_predictor_v1.pth")
+scaler_away = load_scaler("./data_analysis/models/goals_scaler_away_goals_v1.pkl")
+selected_features_away = load_selected_fetures("./data_analysis/models/away_goals_features_v1.json")
+model_away = load_model("./data_analysis/models/goals_away_predictor_v1.pth")
 
-scaler_outcome = load_scaler("../data_analysis/models/outcome_scaler.pkl")
-selected_features_outcome = load_selected_fetures("../data_analysis/models/outcome_features.json")
-model_outcome = load_model("../data_analysis/models/football_match_predictor_v1.pth")
+scaler_outcome = load_scaler("./data_analysis/models/outcome_scaler.pkl")
+selected_features_outcome = load_selected_fetures("./data_analysis/models/outcome_features.json")
+model_outcome = load_model("./data_analysis/models/football_match_predictor_v1.pth")
 
 away_team = curr_match["away_team"]
 home_goals = "-"

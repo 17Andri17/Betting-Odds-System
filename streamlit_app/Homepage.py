@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from models import FootballMatchPredictor, FootballMatchPredictorOutcome
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", theme='light')
 
 homepage = st.Page(
     "Kursomat.py",
