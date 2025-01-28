@@ -616,13 +616,13 @@ def generate_html_match_list(df, team, home, title):
             hr {
             width: 100%;
             color: #eee;
-            margin: 0;
+            margin: 0 !important;
             }
             a {
-                text-decoration: none;
+                text-decoration: none !important;
             }
             a:hover {
-                text-decoration: none;
+                text-decoration: none !important;
             }
             .winner-tag {
                 display: flex;
