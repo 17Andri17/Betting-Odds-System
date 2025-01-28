@@ -345,12 +345,21 @@ def generate_html_match_list(df):
         matches_html = ""
         for _, row in df[df["round"] == roundi].iterrows():
             filtered_matches = df[(df["date"] == row["date"]) & (df["home_team"] == row["home_team"])]
+            print(filtered_matches[["home_team", "date", "home_last5_wins"]])
+
             filtered_matches = filtered_matches[[col for col in df.columns if 'last5' in col or 'matches_since' in col or 'overall' in col or 'tiredness' in col]]
             filtered_matches = filtered_matches.drop(columns = ["home_last5_possession", "away_last5_possession"])
+            filtered_matches = filtered_matches[~filtered_matches.isna().any(axis=1)]
             all_features = filtered_matches.iloc[0]
+            expected_order = scaler_outcome.feature_names_in_
+            all_features = all_features.reindex(expected_order)
+            filtered_matches = filtered_matches.reindex(columns=expected_order)
+
             all_features_scaled_outcome = scaler_outcome.transform([all_features])
             input_features_outcome = all_features_scaled_outcome[:, [filtered_matches.columns.get_loc(col) for col in selected_features_outcome]]
+
             draw, home_win, away_win = predict_outcome(input_features_outcome, model_outcome)
+
             home_class = ""
             away_class = ""
             home_course = ""
@@ -556,11 +565,11 @@ records_to_show["new"] = False
 
 all_records_to_show = pd.concat([new_records_to_show, records_to_show])
 
-print(all_records_to_show)
 
 with col2:
     # st.components.v1.html(generate_html_match_list(records_to_show), height=4000)
     st.markdown(generate_html_match_list(all_records_to_show), unsafe_allow_html=True)
+
 
 # for i in range(min(50, df_filtered['home_team'].count())):
 #     col1, col2, col3, col4, col5, col6 = st.columns([3,5,2,5,2,2])

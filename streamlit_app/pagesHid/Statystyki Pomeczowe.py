@@ -414,7 +414,8 @@ def exact_score_probability(home_lambda, away_lambda, home_goals, away_goals):
     p_away = (away_lambda ** away_goals) * math.exp(-away_lambda) / math.factorial(away_goals)
     return p_home * p_away
 
-def get_probabilities(all_fetures):
+def get_probabilities(all_features):
+    
     all_features_scaled = scaler.transform([all_features])
     input_features = all_features_scaled[:, [filtered_matches.columns.get_loc(col) for col in selected_features]]
 
@@ -424,9 +425,13 @@ def get_probabilities(all_fetures):
     all_features_scaled_away = scaler_home.transform([all_features])
     input_features_away = all_features_scaled_away[:, [filtered_matches.columns.get_loc(col) for col in selected_features_away]]
 
+    expected_order = scaler_outcome.feature_names_in_
+    all_features = all_features.reindex(expected_order)
+    
+
     all_features_scaled_outcome = scaler_outcome.transform([all_features])
     input_features_outcome = all_features_scaled_outcome[:, [filtered_matches.columns.get_loc(col) for col in selected_features_outcome]]
-
+    
     probabilities = {}
 
     probabilities["under25"], probabilities["over25"] = predict_goals(input_features, model)
@@ -973,6 +978,7 @@ filtered_matches = filtered_matches[[col for col in matches.columns if 'last5' i
 filtered_matches = filtered_matches.drop(columns = ["home_last5_possession", "away_last5_possession"])
 filtered_matches = filtered_matches[~filtered_matches.isna().any(axis=1)]
 all_features = filtered_matches.iloc[0]
+
 
 match_probabilities = get_probabilities(all_features)
 
