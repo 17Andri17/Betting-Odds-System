@@ -424,7 +424,6 @@ def loadPage(current_league):
 
         return html_template
 
-    @st.cache_data
     def loadData(current_league):
         df = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_weather_new.csv")
         df["date"] = pd.to_datetime(df["date"], errors="coerce")

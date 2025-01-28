@@ -96,7 +96,6 @@ st.html(f"<style>{css}</style>")
 #     #st.session_state["playersPL"] = players
 #     st.session_state["oddsSA"] = oddsSA
 
-@st.cache_data
 def loadData():
     df = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_new.csv")
     df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
