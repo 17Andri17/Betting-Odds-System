@@ -11,6 +11,7 @@ import torch.nn as nn
 import os
 
 st.write(os.getcwd())
+st.write(os.listdir())
 
 css = """
     .stMainBlockContainer {
