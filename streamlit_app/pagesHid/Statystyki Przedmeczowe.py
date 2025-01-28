@@ -741,14 +741,14 @@ def generate_html_match_list(df, team, home, title):
 
 @st.cache_data
 def load_data():
-    odds = pd.read_csv("../odds.csv")
-    standings = pd.read_csv("../standings_with_new.csv")
+    odds = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/odds.csv")
+    standings = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/standings_with_new.csv")
 
-    matches = pd.read_csv("../final_prepared_data_with_weather_new.csv")
+    matches = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_weather_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
 
     #new_matches = pd.read_csv("../new_matches_fbref.csv")
-    new_matches = pd.read_csv("../new_matches_fbref.csv")
+    new_matches = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/new_matches_fbref.csv")
     new_matches["date"] = pd.to_datetime(new_matches["date"])
 
     return odds, standings, matches, new_matches

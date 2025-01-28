@@ -426,7 +426,7 @@ def loadPage(current_league):
 
     @st.cache_data
     def loadData(current_league):
-        df = pd.read_csv("../final_prepared_data_with_new.csv")
+        df = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_weather_new.csv")
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
         df["date"] = df["date"].astype(str)
         df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
@@ -439,7 +439,7 @@ def loadPage(current_league):
         df = df.sort_values("round")
         dfPL = df[df["league"] == current_league]
 
-        df = pd.read_csv("../new_matches_fbref.csv")
+        df = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/new_matches_fbref.csv")
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
         df["date"] = df["date"].astype(str)
         df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
@@ -450,7 +450,7 @@ def loadPage(current_league):
         df = df.sort_values("round")
         dfPLNew = df[df["league"] == current_league]
 
-        standings = pd.read_csv("../standings_with_new.csv")
+        standings = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/standings_with_new.csv")
         standings['date']=pd.to_datetime(standings['date'])
         standings['goal_difference'] = standings['goal_difference'].astype(int)
         standings['goals'] = standings['goals'].astype(int) 

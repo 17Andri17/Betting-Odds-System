@@ -54,37 +54,13 @@ future_match_stats = st.Page(
     icon="📊",
 )
 
-bundesliga_stats = st.Page(
-    "pagesHid/Statystyki Bundesliga.py",
-    title="Statystyki Bundesliga",
-    icon="📊",
-)
-
-serie_a_stats = st.Page(
-    "pagesHid/Statystyki Serie A.py",
-    title="Statystyki Serie A",
-    icon="📊",
-)
-
-la_liga_stats = st.Page(
-    "pagesHid/Statystyki La Liga.py",
-    title="Statystyki La Liga",
-    icon="📊",
-)
-
-ligue_1_stats = st.Page(
-    "pagesHid/Statystyki Ligue 1.py",
-    title="Statystyki Ligue 1",
-    icon="📊",
-)
-
 model_page = st.Page(
     "pagesVis/Your model.py",
     title="Your model",
     icon="📊",
 )
 
-pg = st.navigation(pages = [homepage, premier_league, bundesliga, seriea, ligue1, laliga, historic_match_stats, future_match_stats, bundesliga_stats, serie_a_stats, la_liga_stats, ligue_1_stats, model_page], position="hidden")
+pg = st.navigation(pages = [homepage, premier_league, bundesliga, seriea, ligue1, laliga, historic_match_stats, future_match_stats, model_page], position="hidden")
 
 st.markdown(
     """
