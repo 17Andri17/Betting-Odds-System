@@ -42,7 +42,7 @@ st.markdown("""
     <table>
         <thead>
             <tr>
-                <th>H\\A</th>
+                <th>H/A</th>
                 <td>0</td>
                 <td>1</td>
                 <td>2</td>
