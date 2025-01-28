@@ -738,21 +738,21 @@ def generate_html_match_list(df, team, home, title):
 
     return html_template
 
-#@st.cache_data
+@st.cache_data
 def load_data():
-    odds = pd.read_csv("../odds.csv")
-    standings = pd.read_csv("../standings_with_new.csv")
+    odds = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/odds.csv")
+    standings = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/standings_with_new.csv")
     
-    players_pl = pd.read_csv("../players_pl.csv")
-    players_ll = pd.read_csv("../players_ll.csv")
-    players_sa = pd.read_csv("../players_sa.csv")
-    players_bl = pd.read_csv("../players_bl.csv")
-    players_l1 = pd.read_csv("../players_l1.csv")
-    players_new = pd.read_csv("../new_players.csv")
+    players_pl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_pl.csv")
+    players_ll = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_ll.csv")
+    players_sa = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_sa.csv")
+    players_bl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_bl.csv")
+    players_l1 = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_l1.csv")
+    players_new = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/new_players.csv")
     players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa, players_new], ignore_index=True)
     players["date"] = pd.to_datetime(players["date"])
 
-    matches = pd.read_csv("../final_prepared_data_with_weather_new.csv")
+    matches = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_weather_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
 
     players = players.rename(columns={"position": "position_x"})
@@ -905,21 +905,21 @@ curr_match = matches[(matches["date"] == date) & (matches["home_team"] == home_t
 matches2 = matches.copy()
 
 # Load models
-scaler = load_scaler("../models/goals_scaler_v1.pkl")
-selected_features = load_selected_fetures("../models/goals_features_v1.json")
-model = load_model("../models/goals_predictor_v1.pth")
+scaler = load_scaler("../data_analysis/models/goals_scaler_v1.pkl")
+selected_features = load_selected_fetures("../data_analysis/models/goals_features_v1.json")
+model = load_model("../data_analysis/models/goals_predictor_v1.pth")
 
-scaler_home = load_scaler("../models/goals_scaler_home_goals_v1.pkl")
-selected_features_home = load_selected_fetures("../models/home_goals_features_v1.json")
-model_home = load_model("../models/goals_home_predictor_v1.pth")
+scaler_home = load_scaler("../data_analysis/models/goals_scaler_home_goals_v1.pkl")
+selected_features_home = load_selected_fetures("../data_analysis/models/home_goals_features_v1.json")
+model_home = load_model("../data_analysis/models/goals_home_predictor_v1.pth")
 
-scaler_away = load_scaler("../models/goals_scaler_away_goals_v1.pkl")
-selected_features_away = load_selected_fetures("../models/away_goals_features_v1.json")
-model_away = load_model("../models/goals_away_predictor_v1.pth")
+scaler_away = load_scaler("../data_analysis/models/goals_scaler_away_goals_v1.pkl")
+selected_features_away = load_selected_fetures("../data_analysis/models/away_goals_features_v1.json")
+model_away = load_model("../data_analysis/models/goals_away_predictor_v1.pth")
 
-scaler_outcome = load_scaler("../models/outcome_scaler.pkl")
-selected_features_outcome = load_selected_fetures("../models/outcome_features.json")
-model_outcome = load_model("../models/football_match_predictor_v1.pth")
+scaler_outcome = load_scaler("../data_analysis/models/outcome_scaler.pkl")
+selected_features_outcome = load_selected_fetures("../data_analysis/models/outcome_features.json")
+model_outcome = load_model("../data_analysis/models/football_match_predictor_v1.pth")
 
 team_name_mapping = {
     'Burnley': 'Burnley',
