@@ -113,8 +113,8 @@ def load_team_names_data():
     home_team = st.query_params.get("home_team", "Arsenal")
     today_date = datetime.datetime.today()
     date = st.query_params.get("date", today_date)
-    matches = pd.read_csv("../final_prepared_data_with_weather_new.csv")
-    new_matches=pd.read_csv("../new_matches_fbref.csv")
+    matches = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_weather_new.csv")
+    new_matches=pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/new_matches_fbref.csv")
     return home_team, date, matches, new_matches
 
 home_team, date, matches, new_matches = load_team_names_data()
