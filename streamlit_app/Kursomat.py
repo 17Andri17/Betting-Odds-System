@@ -98,7 +98,7 @@ st.html(f"<style>{css}</style>")
 
 @st.cache_data
 def loadData():
-    df = pd.read_csv("../final_prepared_data_with_new.csv")
+    df = pd.read_csv("../data/final_prepared_data_with_new.csv")
     df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
     df["date"] = df["date"].astype(str)
     df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
@@ -115,7 +115,7 @@ def loadData():
     dfL1 = df[df["league"] == "l1"]
     dfSA = df[df["league"] == "sa"]
 
-    df = pd.read_csv("../new_matches_fbref.csv")
+    df = pd.read_csv("../data/new_matches_fbref.csv")
     df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
     df["date"] = df["date"].astype(str)
     df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
@@ -130,7 +130,7 @@ def loadData():
     dfL1New = df[df["league"] == "l1"]
     dfSANew = df[df["league"] == "sa"]
 
-    standings = pd.read_csv("../standings_with_new.csv")
+    standings = pd.read_csv("../data/standings_with_new.csv")
     standings['date']=pd.to_datetime(standings['date'])
     standings['goal_difference'] = standings['goal_difference'].astype(int)
     standings['goals'] = standings['goals'].astype(int) 
