@@ -6,6 +6,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import datetime
 
+css = """
+    .stMainBlockContainer {
+        padding-top: 30px !important;
+    }
+
+"""
+st.html(f"<style>{css}</style>")
+
 st.title("Własny model Poissona dla przewidywania wyników meczów")
 
 st.header("Rozkład Poissona")

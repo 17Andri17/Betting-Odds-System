@@ -11,13 +11,6 @@ import joblib
 import torch.nn as nn
 from urllib.parse import quote
 
-css = """
-    .stMainBlockContainer {
-        padding-top: 25px !important;
-    }
-
-"""
-st.html(f"<style>{css}</style>")
 
 def loadPage(current_league):
     if current_league == "pl":
@@ -37,6 +30,14 @@ def loadPage(current_league):
         st.session_state.theme = 'light'
 
     theme = st.session_state.theme
+
+    css = """
+    .stMainBlockContainer {
+        padding-top: 30px !important;
+    }
+
+    """
+    st.html(f"<style>{css}</style>")
 
     # Chowanie statystyk po zmianie filtrów
     def restartStats():
