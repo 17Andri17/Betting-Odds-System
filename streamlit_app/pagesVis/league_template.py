@@ -319,10 +319,10 @@ def loadPage(current_league):
                     margin: 0;
                 }
                 a {
-                    text-decoration: none;
+                    text-decoration: none !important;
                 }
                 a:hover {
-                    text-decoration: none;
+                    text-decoration: none !important;
                 }
             </style>
         """
