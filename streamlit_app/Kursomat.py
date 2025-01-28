@@ -98,7 +98,7 @@ st.html(f"<style>{css}</style>")
 
 @st.cache_data
 def loadData():
-    df = pd.read_csv("../data/final_prepared_data_with_new.csv")
+    df = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_new.csv")
     df["date"] = pd.to_datetime(df["date"], errors="coerce")  # Najpierw konwersja do datetime
     df["date"] = df["date"].astype(str)
     df["formation_home"] = df["formation_home"].str.replace(r"-1-1$", "-2", regex=True)
