@@ -8,6 +8,9 @@ import json
 import torch.nn.functional as F
 import joblib
 import torch.nn as nn
+import os
+
+st.write(os.getcwd())
 
 css = """
     .stMainBlockContainer {
