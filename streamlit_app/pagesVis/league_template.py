@@ -316,7 +316,7 @@ def loadPage(current_league):
                 hr {
                     width: 100%;
                     color: #eee;
-                    margin: 0;
+                    margin: 0 !important;
                 }
                 a {
                     text-decoration: none !important;
