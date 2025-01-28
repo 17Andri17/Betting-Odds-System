@@ -14,6 +14,8 @@ css = """
 """
 st.html(f"<style>{css}</style>")
 
+# Model theory
+
 st.title("Własny model Poissona dla przewidywania wyników meczów")
 
 st.header("Rozkład Poissona")
@@ -106,6 +108,7 @@ st.markdown("""
     </ul>
 """, unsafe_allow_html=True)
 
+# Get query params
 def load_team_names_data():
     home_team = st.query_params.get("home_team", "Arsenal")
     today_date = datetime.datetime.today()
@@ -160,6 +163,7 @@ table.table-bordered th, table.table-bordered td {
 </style>
 """, unsafe_allow_html=True)
 
+# Providing team stats
 st.subheader("Drużyny:")
 home_team = st.text_input("Nazwa drużyny gospodarzy", home_team)
 away_team = st.text_input("Nazwa drużyny gości", away_team)
@@ -171,7 +175,7 @@ with col1:
 with col2:
     home_offensive_power = st.number_input("Siła ofensywna", min_value=0.0, value=1.2, step=0.1)
 with col3:
-    home_defensive_power = st.number_input("Siła defensywna", min_value=0.0, value=0.8, step=0.1)
+    home_defensive_power = st.number_input("Wskaźnik słabości defensywnej", min_value=0.0, value=0.8, step=0.1)
 
 st.subheader("Statystyki drużyny gości")
 col1, col2, col3=st.columns([1, 1, 1])
@@ -180,13 +184,14 @@ with col1:
 with col2:  
     away_offensive_power = st.number_input("Siła ofensywna", min_value=0.0, value=1.1, step=0.1)
 with col3:    
-    away_defensive_power = st.number_input("Siła defensywna", min_value=0.0, value=0.9, step=0.1)
+    away_defensive_power = st.number_input("Wskaźnik słabości defensywnej", min_value=0.0, value=0.9, step=0.1)
 
 
 home_lambda = home_offensive_power * away_defensive_power * home_avg_goals
 away_lambda = away_offensive_power * home_defensive_power * away_avg_goals
 
 
+# Calculating probs
 st.subheader(f"Obliczone lambdy:")
 st.write(f"##### Drużyna gospodarzy {home_team}: {home_lambda:.2f}")
 st.write(f"##### Drużyna gości {away_team}: {away_lambda:.2f}")
