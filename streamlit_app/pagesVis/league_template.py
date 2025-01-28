@@ -424,8 +424,8 @@ def loadPage(current_league):
 
         return html_template
 
-    #@st.cache_data
-    def loadData():
+    @st.cache_data
+    def loadData(current_league):
         df = pd.read_csv("../final_prepared_data_with_new.csv")
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
         df["date"] = df["date"].astype(str)
@@ -460,7 +460,7 @@ def loadPage(current_league):
         return dfPL, dfPLNew, standingsPL
 
 
-    df, df_new, standings = loadData()
+    df, df_new, standings = loadData(current_league)
     df_filtered=df.copy()
     standings_filtered=standings.copy()
     df_filtered_new = df_new.copy()
@@ -514,7 +514,9 @@ def loadPage(current_league):
         team_stats["highlight"] = ""
         if i<5:
             team_stats["highlight"] = "green"
-        if i>17:
+        if (current_league == 'bl' or current_league == 'l1') and i>15:
+            team_stats["highlight"] = "red"
+        elif i>17:
             team_stats["highlight"] = "red"
         team_stats["name"] = row['team']
         team_stats["played"] = row['matches_played']
@@ -564,7 +566,10 @@ def loadPage(current_league):
     df_filtered_new.sort_values(by=["round", "date", "time"], ascending=False, inplace=True)
 
     # Wypisywanie danych
-    records_to_show = df_filtered[df_filtered["round"] >= max(df_filtered["round"])-1]
+    if team_filter==[]:
+        records_to_show = df_filtered[df_filtered["round"] >= max(df_filtered["round"])-1]
+    else:
+        records_to_show = df_filtered
     if len(df_filtered_new["round"])>0:
         new_records_to_show = df_filtered_new[df_filtered_new["round"] <= min(df_filtered_new["round"])+1]
     else:
