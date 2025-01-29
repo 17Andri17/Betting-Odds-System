@@ -1059,24 +1059,24 @@ ax.axis('off')  # Turn off the axis
 plt.show()
 plt.tight_layout()
 
-if len(probabilities) > 0:
-    fig22, ax = plt.subplots(figsize=(6, 1))
-    start = 0
+# if len(probabilities) > 0:
+#     fig22, ax = plt.subplots(figsize=(6, 1))
+#     start = 0
 
-    for prob, color in zip(probabilities, colors):
-        ax.barh(0, prob, left=start, color=color, edgecolor='none', height=0.5)
-        start += prob
+#     for prob, color in zip(probabilities, colors):
+#         ax.barh(0, prob, left=start, color=color, edgecolor='none', height=0.5)
+#         start += prob
 
-    start = 0
-    for prob, color in zip(probabilities, colors):
-        ax.text(start + prob / 2, 0, f"{int(prob * 100)}%", color='black', va='center', ha='center', fontsize=10)
-        start += prob
+#     start = 0
+#     for prob, color in zip(probabilities, colors):
+#         ax.text(start + prob / 2, 0, f"{int(prob * 100)}%", color='black', va='center', ha='center', fontsize=10)
+#         start += prob
 
-    ax.set_xlim(0, 1)
-    ax.axis('off')  # Turn off the axis
-    # plt.title('Prawdopodbieństwo zdarzeń bukmacherów', pad=10)
-    plt.show()
-    plt.tight_layout()
+#     ax.set_xlim(0, 1)
+#     ax.axis('off')  # Turn off the axis
+#     # plt.title('Prawdopodbieństwo zdarzeń bukmacherów', pad=10)
+#     plt.show()
+#     plt.tight_layout()
 
 categories = ["Posiadanie piłki", "Strzały", "Strzały na bramkę", "Rzuty wolne", "Rzuty rożne",
                 "Spalone", "Faule", "Żółte kartki", "Czerwone kartki", "Podania", "Celne podania"]
