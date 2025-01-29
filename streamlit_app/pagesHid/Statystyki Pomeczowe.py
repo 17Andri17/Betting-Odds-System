@@ -1033,11 +1033,11 @@ st.components.v1.html(score_html, height=50)
 categories = ['Home Win', 'Draw', 'Away Win']
 probabilities2 = [round(match_probabilities["home_win"], 2), round(match_probabilities["draw"], 2), 1 - round(match_probabilities["home_win"], 2) - round(match_probabilities["draw"], 2)]
 
-if len(merged_df[(merged_df["date"] == date) & (merged_df["home_team"] == home_team)]) > 0:
-    probabilities = [merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsH"].iloc[0], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsD"].iloc[0], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsA"].iloc[0]]
-    probabilities = [round(probabilities[0], 2), round(probabilities[1], 2), 1 - round(probabilities[0], 2) - round(probabilities[1], 2)]
-else:
-    probabilities = []
+# if len(merged_df[(merged_df["date"] == date) & (merged_df["home_team"] == home_team)]) > 0:
+#     probabilities = [merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsH"].iloc[0], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsD"].iloc[0], merged_df[(merged_df["date"]==date) & (merged_df["home_team"] == home_team)]["B365probsA"].iloc[0]]
+#     probabilities = [round(probabilities[0], 2), round(probabilities[1], 2), 1 - round(probabilities[0], 2) - round(probabilities[1], 2)]
+# else:
+#     probabilities = []
 colors = ['#28a745', '#6c757d', '#374df5']
 
 fig21, ax = plt.subplots(figsize=(8, 1))
