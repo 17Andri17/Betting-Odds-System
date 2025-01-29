@@ -740,6 +740,7 @@ def generate_html_match_list(df, team, home, title):
 
 def load_data():
     # odds = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/odds.csv")
+    odds = []
     standings = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/standings_with_new.csv")
     
     # players_pl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_pl.csv")
@@ -921,55 +922,55 @@ scaler_outcome = load_scaler("./data_analysis/models/outcome_scaler.pkl")
 selected_features_outcome = load_selected_fetures("./data_analysis/models/outcome_features.json")
 model_outcome = load_model("./data_analysis/models/football_match_predictor_v1.pth")
 
-team_name_mapping = {
-    'Burnley': 'Burnley',
-    'Arsenal': 'Arsenal',
-    'Bournemouth': 'Bournemouth',
-    'Brighton': 'Brighton & Hove Albion',
-    'Everton': 'Everton',
-    'Sheffield United': 'Sheffield United',
-    'Newcastle': 'Newcastle United',
-    'Brentford': 'Brentford',
-    'Chelsea': 'Chelsea',
-    'Man United': 'Manchester United',
-    "Nott'm Forest": 'Nottingham Forest',
-    'Fulham': 'Fulham',
-    'Liverpool': 'Liverpool',
-    'Wolves': 'Wolverhampton Wanderers',
-    'Tottenham': 'Tottenham Hotspur',
-    'Man City': 'Manchester City',
-    'Aston Villa': 'Aston Villa',
-    'West Ham': 'West Ham United',
-    'Crystal Palace': 'Crystal Palace',
-    'Luton': 'Luton Town',
-    'Leeds': 'Leeds United',
-    'Leicester': 'Leicester City',
-    'Southampton': 'Southampton',
-    'Watford': 'Watford',
-    'Norwich': 'Norwich City',
-    'West Brom': 'West Bromwich Albion',
-    'Huddersfield': 'Huddersfield Town',
-    'Cardiff': 'Cardiff City'
-}
+# team_name_mapping = {
+#     'Burnley': 'Burnley',
+#     'Arsenal': 'Arsenal',
+#     'Bournemouth': 'Bournemouth',
+#     'Brighton': 'Brighton & Hove Albion',
+#     'Everton': 'Everton',
+#     'Sheffield United': 'Sheffield United',
+#     'Newcastle': 'Newcastle United',
+#     'Brentford': 'Brentford',
+#     'Chelsea': 'Chelsea',
+#     'Man United': 'Manchester United',
+#     "Nott'm Forest": 'Nottingham Forest',
+#     'Fulham': 'Fulham',
+#     'Liverpool': 'Liverpool',
+#     'Wolves': 'Wolverhampton Wanderers',
+#     'Tottenham': 'Tottenham Hotspur',
+#     'Man City': 'Manchester City',
+#     'Aston Villa': 'Aston Villa',
+#     'West Ham': 'West Ham United',
+#     'Crystal Palace': 'Crystal Palace',
+#     'Luton': 'Luton Town',
+#     'Leeds': 'Leeds United',
+#     'Leicester': 'Leicester City',
+#     'Southampton': 'Southampton',
+#     'Watford': 'Watford',
+#     'Norwich': 'Norwich City',
+#     'West Brom': 'West Bromwich Albion',
+#     'Huddersfield': 'Huddersfield Town',
+#     'Cardiff': 'Cardiff City'
+# }
 
-odds['home_team'] = odds['home_team'].map(team_name_mapping)
-odds['away_team'] = odds['away_team'].map(team_name_mapping)
+# odds['home_team'] = odds['home_team'].map(team_name_mapping)
+# odds['away_team'] = odds['away_team'].map(team_name_mapping)
 
-odds['Date'] = pd.to_datetime(odds['Date'], format='%d/%m/%Y')
-matches['date'] = pd.to_datetime(matches['date'])
-odds = odds[["Date", "home_team", "away_team", "B365H", "B365D", "B365A"]]
+# odds['Date'] = pd.to_datetime(odds['Date'], format='%d/%m/%Y')
+# matches['date'] = pd.to_datetime(matches['date'])
+# odds = odds[["Date", "home_team", "away_team", "B365H", "B365D", "B365A"]]
 
-merged_df = pd.merge(
-    matches,
-    odds,
-    how='inner',
-    left_on=['home_team', 'away_team', 'date'],
-    right_on=['home_team', 'away_team', 'Date']
-)
-merged_df.drop(columns=['Date'], inplace=True)
-merged_df["B365probsH"] = 1 / merged_df["B365H"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
-merged_df["B365probsD"] = 1 / merged_df["B365D"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
-merged_df["B365probsA"] = 1 / merged_df["B365A"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
+# merged_df = pd.merge(
+#     matches,
+#     odds,
+#     how='inner',
+#     left_on=['home_team', 'away_team', 'date'],
+#     right_on=['home_team', 'away_team', 'Date']
+# )
+# merged_df.drop(columns=['Date'], inplace=True)
+# merged_df["B365probsH"] = 1 / merged_df["B365H"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
+# merged_df["B365probsD"] = 1 / merged_df["B365D"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
+# merged_df["B365probsA"] = 1 / merged_df["B365A"] / (1 / merged_df["B365H"] + 1 / merged_df["B365D"] + 1 / merged_df["B365A"])
 
 
 away_team = curr_match["away_team"]
