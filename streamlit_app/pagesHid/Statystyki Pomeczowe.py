@@ -742,25 +742,15 @@ def load_data():
     # odds = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/odds.csv")
     odds = []
     standings = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/standings_with_new.csv")
-    
-    # players_pl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_pl.csv")
-    # players_ll = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_ll.csv")
-    # players_sa = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_sa.csv")
-    # players_bl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_bl.csv")
-    # players_l1 = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_l1.csv")
-    # players_new = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/new_players.csv")
-    # players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa, players_new], ignore_index=True)
-    # players["date"] = pd.to_datetime(players["date"])
-    players = []
 
     matches = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_weather_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
 
     # players = players.rename(columns={"position": "position_x"})
-    return odds, standings, players, matches
+    return odds, standings, matches
 
 def get_processed_data(home_team, date, league):
-    odds, standings, players, matches = load_data()
+    odds, standings, matches = load_data()
     standings['date']=pd.to_datetime(standings['date'])
     standings['goal_difference'] = standings['goal_difference'].astype(int)
     standings['goals'] = standings['goals'].astype(int)
@@ -768,6 +758,15 @@ def get_processed_data(home_team, date, league):
     standings = standings[standings["league"] == league]
     current_standings_date = standings[standings['date'] < date]["date"].tail(1).iloc[0]
     standings = standings[standings["date"] == current_standings_date]
+    # players_pl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_pl.csv")
+    # players_ll = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_ll.csv")
+    # players_sa = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_sa.csv")
+    # players_bl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_bl.csv")
+    # players_l1 = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_l1.csv")
+    players_new = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/new_players.csv")
+    players_league = pd.read_csv(f"https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_{league}.csv")
+    players = pd.concat([players_league, players_new], ignore_index=True)
+    players["date"] = pd.to_datetime(players["date"])
     return odds, standings, players, matches
 
 def getCourse(prob):
