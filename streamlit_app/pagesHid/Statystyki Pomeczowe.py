@@ -746,7 +746,6 @@ def load_data():
     matches = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_weather_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
 
-    # players = players.rename(columns={"position": "position_x"})
     return odds, standings, matches
 
 def get_processed_data(home_team, date, league):
@@ -767,6 +766,7 @@ def get_processed_data(home_team, date, league):
     players_league = pd.read_csv(f"https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_{league}.csv")
     players = pd.concat([players_league, players_new], ignore_index=True)
     players["date"] = pd.to_datetime(players["date"])
+    players = players.rename(columns={"position": "position_x"})
     return odds, standings, players, matches
 
 def getCourse(prob):
