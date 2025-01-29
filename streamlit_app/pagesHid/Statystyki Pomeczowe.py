@@ -1107,9 +1107,9 @@ with tab2:
 ############ Składy ############
 with tab3:
     col1, col2, col3 = st.columns([1, 4, 1])
-    # with col2:
-    #     with st.spinner("Generowanie składów"):
-    #         squads(players, date, home_team, away_team, formation_home, formation_away)
+    with col2:
+        with st.spinner("Generowanie składów"):
+            squads(players, date, home_team, away_team, formation_home, formation_away)
 
 
 ############ Analiza ############
