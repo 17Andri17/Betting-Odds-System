@@ -24,7 +24,6 @@ current_league = st.query_params.get("league")
 def create_team_structure(idx, formation, starting_eleven):
     formation_parts = list(map(int, formation.split('-')))
     used_players = set()
-    print(starting_eleven.columns)
     starting_eleven["main_pos"] = starting_eleven["position_x"].apply(lambda x: x.split(",")[0])
     starting_eleven["number_of_positions"] = starting_eleven["position_x"].apply(lambda x: len(x.split(",")))
     formation_array = [[starting_eleven[starting_eleven["main_pos"] == "GK"].iloc[0]["player"]]]
