@@ -22,7 +22,7 @@ st.header("Rozkład Poissona")
 
 st.subheader("Opis modelu")
 st.write(
-    """Rozkład Poissona jest dyskretnym rozkładem prawdopodobieństwa, który wyraża prawdopodobieństwo uzyskania określonej liczby zdarzeń w danym przedziale czasowym, 
+    r"""Rozkład Poissona jest dyskretnym rozkładem prawdopodobieństwa, który wyraża prawdopodobieństwo uzyskania określonej liczby zdarzeń w danym przedziale czasowym, 
     pod warunkiem, że te zdarzenia zachodzą niezależnie i w stałym tempie. Prawdopodobieństwo wystąpienia \(k\) zdarzeń oblicza się wzorem:
     """
 )
@@ -87,7 +87,7 @@ st.write("Zwycięstwo drużyny H możemy obliczyć jako sumę liczb prawdopodobi
 
 
 st.subheader("Wzory na obliczanie lambd")
-st.write("Parametrami naszego modelu są liczby $$\lambda_{H}$$ i $$\lambda_{A}$$. Wyliczamy je przy użyciu następujących wzorów:")
+st.write(r"Parametrami naszego modelu są liczby $$\lambda_{H}$$ i $$\lambda_{A}$$. Wyliczamy je przy użyciu następujących wzorów:")
 
 st.latex(r'''\lambda_{\text{H}} = \text{SO}_{\text{H}} \cdot \text{SD}_{\text{A}} \cdot \gamma_{\text{H}}''')
 st.latex(r'''\lambda_{\text{A}} = \text{SO}_{\text{A}} \cdot \text{SD}_{\text{H}} \cdot \gamma_{\text{A}}''')

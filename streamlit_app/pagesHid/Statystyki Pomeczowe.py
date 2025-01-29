@@ -20,7 +20,7 @@ from scipy.optimize import minimize_scalar
 from urllib.parse import quote
 
 current_league = st.query_params.get("league")
-#@st.cache_data
+@st.cache_data
 def create_team_structure(idx, formation, starting_eleven):
     formation_parts = list(map(int, formation.split('-')))
     used_players = set()
@@ -246,7 +246,7 @@ def create_team_structure(idx, formation, starting_eleven):
 
     return formation_array
 
-#@st.cache_data
+@st.cache_data
 def get_starters(group):
     starters = []
     group = group.sort_index()
@@ -279,7 +279,7 @@ def get_starters(group):
     group = group.iloc[starters]
     return group
 
-#@st.cache_data
+@st.cache_data
 def squads(players, date, home_team, away_team, formation_home, formation_away):
     home_team_players = players[(players["date"]==date) & (players["team"]==home_team)]
     away_team_players = players[(players["date"]==date) & (players["team"]==away_team)]
@@ -341,7 +341,7 @@ def squads(players, date, home_team, away_team, formation_home, formation_away):
     plt.show()
     st.write(fig)
 
-#@st.cache_data
+@st.cache_data
 def statsGraph(home_stats, away_stats, categories):
     total_stats = np.array(home_stats) + np.array(away_stats)
     home_ratios = np.array(home_stats) / total_stats
