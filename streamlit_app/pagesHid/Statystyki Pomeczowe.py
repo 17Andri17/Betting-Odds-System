@@ -742,14 +742,15 @@ def load_data():
     odds = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/odds.csv")
     standings = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/standings_with_new.csv")
     
-    players_pl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_pl.csv")
-    players_ll = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_ll.csv")
-    players_sa = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_sa.csv")
-    players_bl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_bl.csv")
-    players_l1 = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_l1.csv")
-    players_new = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/new_players.csv")
-    players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa, players_new], ignore_index=True)
-    players["date"] = pd.to_datetime(players["date"])
+    # players_pl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_pl.csv")
+    # players_ll = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_ll.csv")
+    # players_sa = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_sa.csv")
+    # players_bl = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_bl.csv")
+    # players_l1 = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/players_l1.csv")
+    # players_new = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/new_players.csv")
+    # players = pd.concat([players_pl, players_ll, players_l1, players_bl, players_sa, players_new], ignore_index=True)
+    # players["date"] = pd.to_datetime(players["date"])
+    players = []
 
     matches = pd.read_csv("https://raw.githubusercontent.com/17Andri17/Betting-Odds-System/refs/heads/main/data/final_prepared_data_with_weather_new.csv")
     matches["date"] = pd.to_datetime(matches["date"])
@@ -1106,9 +1107,9 @@ with tab2:
 ############ Składy ############
 with tab3:
     col1, col2, col3 = st.columns([1, 4, 1])
-    with col2:
-        with st.spinner("Generowanie składów"):
-            squads(players, date, home_team, away_team, formation_home, formation_away)
+    # with col2:
+    #     with st.spinner("Generowanie składów"):
+    #         squads(players, date, home_team, away_team, formation_home, formation_away)
 
 
 ############ Analiza ############
